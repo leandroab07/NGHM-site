@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { cookies } from 'next/headers'
+import { redirect } from 'next/navigation'
 
 export const metadata: Metadata = {
   title: 'Calendário do Laboratório',
@@ -23,6 +24,8 @@ export default async function CalendarioPage() {
       if (user) currentUsername = user.username
     }
   }
+
+  if (!currentUsername) redirect('/admin/login')
 
   const eventos = await getEventos()
 

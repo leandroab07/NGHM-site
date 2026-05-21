@@ -5,13 +5,16 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useState } from 'react'
 import type { PublicUser } from '@/lib/types'
 
-const links = [
+const publicLinks = [
   { href: '/', label: 'Início' },
   { href: '/equipe', label: 'Equipe' },
   { href: '/publicacoes', label: 'Publicações' },
-  { href: '/calendario', label: 'Calendário' },
   { href: '/projetos', label: 'Projetos' },
   { href: '/ferramentas', label: 'Ferramentas' },
+]
+
+const authLinks = [
+  { href: '/calendario', label: 'Calendário' },
 ]
 
 function initials(name: string) {
@@ -49,7 +52,7 @@ export default function NavbarClient({ user }: { user: PublicUser | null }) {
 
           {/* Links desktop */}
           <div className="hidden md:flex items-center gap-0.5">
-            {links.map(l => (
+            {[...publicLinks, ...(user ? authLinks : [])].map(l => (
               <Link
                 key={l.href}
                 href={l.href}
@@ -134,7 +137,7 @@ export default function NavbarClient({ user }: { user: PublicUser | null }) {
         {/* Menu mobile */}
         {menuOpen && (
           <div className="md:hidden pb-3 border-t border-gray-100 pt-2">
-            {links.map(l => (
+            {[...publicLinks, ...(user ? authLinks : [])].map(l => (
               <Link key={l.href} href={l.href} onClick={() => setMenuOpen(false)}
                 className={`block px-4 py-2 mt-1 rounded-lg text-sm font-medium transition-all ${
                   pathname === l.href ? 'bg-teal-50 text-teal-700' : 'text-gray-600 hover:bg-gray-50'
