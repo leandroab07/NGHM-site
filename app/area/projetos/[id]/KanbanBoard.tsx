@@ -1,13 +1,13 @@
 'use client'
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import type { ProjectTask, LabProject } from '@/lib/types'
 
 type Member = { username: string; name: string }
 
-// Active Kanban columns — completed tasks leave the board and go to the summary
 const BOARD_COLS = [
-  { id: 'todo' as const,         label: 'A Fazer',       dot: 'bg-slate-400',   cardAccent: 'border-l-slate-300',   dropRing: 'ring-slate-300'  },
-  { id: 'em_andamento' as const, label: 'Em Andamento',  dot: 'bg-blue-500',    cardAccent: 'border-l-blue-400',    dropRing: 'ring-blue-300'   },
+  { id: 'todo' as const,         label: 'A Fazer',      dot: 'bg-slate-400',   cardAccent: 'border-l-slate-300',   dropRing: 'ring-slate-300'   },
+  { id: 'em_andamento' as const, label: 'Em Andamento', dot: 'bg-blue-500',    cardAccent: 'border-l-blue-400',    dropRing: 'ring-blue-300'    },
+  { id: 'concluido' as const,    label: 'Concluído',    dot: 'bg-emerald-500', cardAccent: 'border-l-emerald-400', dropRing: 'ring-emerald-300' },
 ]
 type ActiveCol = (typeof BOARD_COLS)[number]['id']
 
@@ -84,6 +84,18 @@ export default function KanbanBoard({
 }) {
   const [tasks, setTasks]           = useState<ProjectTask[]>(initialTasks)
   const [adding, setAdding]         = useState<ActiveCol | null>(null)
+  const addFormRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (adding === null) return
+    function handleMouseDown(e: MouseEvent) {
+      if (addFormRef.current && !addFormRef.current.contains(e.target as Node)) {
+        setAdding(null); setNewTitle(''); setNewAssigned([])
+      }
+    }
+    document.addEventListener('mousedown', handleMouseDown)
+    return () => document.removeEventListener('mousedown', handleMouseDown)
+  }, [adding])
   const [newTitle, setNewTitle]     = useState('')
   const [newAssigned, setNewAssigned] = useState<string[]>([])
   const [creating, setCreating]     = useState(false)
@@ -95,13 +107,12 @@ export default function KanbanBoard({
   const [dragOver, setDragOver]     = useState<ActiveCol | null>(null)
   const [confirming, setConfirming] = useState<string | null>(null) // task being confirmed for completion
 
-  const boardTasks  = tasks.filter(t => t.status !== 'concluido')
-  const doneTasks   = tasks.filter(t => t.status === 'concluido')
-  const todoTasks   = tasks.filter(t => t.status === 'todo')
-  const doingTasks  = tasks.filter(t => t.status === 'em_andamento')
+  const doneTasks  = tasks.filter(t => t.status === 'concluido')
+  const todoTasks  = tasks.filter(t => t.status === 'todo')
+  const doingTasks = tasks.filter(t => t.status === 'em_andamento')
 
   function colTasks(col: ActiveCol) {
-    return boardTasks.filter(t => t.status === col).sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+    return tasks.filter(t => t.status === col).sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
   }
 
   // ── Create ───────────────────────────────────────────────────────────────────
@@ -230,7 +241,7 @@ export default function KanbanBoard({
       )}
 
       {/* Kanban board — 2 active columns */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
         {BOARD_COLS.map(col => {
           const cards = colTasks(col.id)
           const isOver = dragOver === col.id
@@ -305,7 +316,7 @@ export default function KanbanBoard({
                     >
                       <div className="flex items-start gap-2">
                         <div className="mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab shrink-0"><GripIcon/></div>
-                        <p className="text-sm font-medium text-gray-900 leading-snug flex-1">{task.titulo}</p>
+                        <p className={`text-sm font-medium leading-snug flex-1 ${col.id === 'concluido' ? 'line-through text-gray-400' : 'text-gray-900'}`}>{task.titulo}</p>
                       </div>
 
                       {task.descricao && (
@@ -338,15 +349,17 @@ export default function KanbanBoard({
                               title="Mover para Em Andamento"
                               className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 text-xs transition-colors">→</button>
                           )}
-                          <button
-                            onClick={() => setConfirming(task.id)}
-                            title="Marcar como concluída"
-                            className="p-1.5 rounded-lg hover:bg-emerald-50 text-gray-400 hover:text-emerald-600 transition-colors"
-                          >
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7"/>
-                            </svg>
-                          </button>
+                          {col.id !== 'concluido' && (
+                            <button
+                              onClick={() => setConfirming(task.id)}
+                              title="Marcar como concluída"
+                              className="p-1.5 rounded-lg hover:bg-emerald-50 text-gray-400 hover:text-emerald-600 transition-colors"
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7"/>
+                              </svg>
+                            </button>
+                          )}
                         </div>
                         <button onClick={() => deleteTask(task.id)}
                           title="Remover"
@@ -368,7 +381,7 @@ export default function KanbanBoard({
 
                 {/* Inline add form */}
                 {adding === col.id ? (
-                  <div className="bg-white rounded-xl border-2 border-teal-400 p-3 shadow-sm">
+                  <div ref={addFormRef} className="bg-white rounded-xl border-2 border-teal-400 p-3 shadow-sm">
                     <textarea
                       autoFocus rows={2}
                       className="w-full text-sm resize-none focus:outline-none placeholder-gray-400 text-gray-900 leading-snug"
