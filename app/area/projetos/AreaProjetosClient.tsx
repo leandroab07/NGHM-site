@@ -13,25 +13,6 @@ const colors = [
   'border-l-amber-500', 'border-l-rose-500', 'border-l-indigo-500',
 ]
 
-function ProjectCard({ projeto, index }: { projeto: LabProject; index: number }) {
-  return (
-    <div className={`bg-white rounded-xl border border-gray-200 border-l-4 ${colors[index % colors.length]} p-5 hover:shadow-md hover:border-gray-300 transition-all`}>
-      <div className="flex items-center gap-2 mb-3 flex-wrap">
-        <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${statusBadge(projeto.status)}`}>
-          {statusLabel(projeto.status)}
-        </span>
-        {projeto.anoInicio && (
-          <span className="text-xs text-gray-400">{projeto.anoInicio}</span>
-        )}
-      </div>
-      <h3 className="font-semibold text-gray-900 leading-snug mb-2">{projeto.titulo}</h3>
-      {projeto.descricao && (
-        <p className="text-sm text-gray-500 leading-relaxed line-clamp-3">{projeto.descricao}</p>
-      )}
-    </div>
-  )
-}
-
 function EmptyState({ label }: { label: string }) {
   return (
     <div className="text-center py-20 text-gray-300">
@@ -46,24 +27,61 @@ function EmptyState({ label }: { label: string }) {
 
 export default function AreaProjetosClient({
   allProjects,
-  myProjects,
+  myProjects: initialMy,
+  pendingIds: initialPendingIds,
+  currentUsername,
 }: {
   allProjects: LabProject[]
   myProjects: LabProject[]
+  pendingIds: string[]
   currentUsername: string
 }) {
   const [tab, setTab] = useState<'all' | 'mine'>('all')
+  const [pendingIds, setPendingIds] = useState<Set<string>>(new Set(initialPendingIds))
+  const [acceptedExtra, setAcceptedExtra] = useState<LabProject[]>([])
+  const [declinedIds, setDeclinedIds] = useState<Set<string>>(new Set())
+  const [responding, setResponding] = useState<string | null>(null)
+
+  const myProjects = [
+    ...initialMy,
+    ...acceptedExtra.filter(p => !initialMy.some(m => m.id === p.id)),
+  ]
+
+  const visibleAll = allProjects.filter(p => {
+    if (!declinedIds.has(p.id)) return true
+    return p.visibility !== 'assigned'
+  })
+
+  async function respond(projeto: LabProject, resposta: 'aceito' | 'recusado') {
+    setResponding(projeto.id)
+    try {
+      const res = await fetch('/api/project-responses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projetoId: projeto.id, resposta }),
+      })
+      if (res.ok) {
+        setPendingIds(prev => { const next = new Set(prev); next.delete(projeto.id); return next })
+        if (resposta === 'aceito') {
+          setAcceptedExtra(prev => [...prev, projeto])
+        } else {
+          setDeclinedIds(prev => new Set([...prev, projeto.id]))
+        }
+      }
+    } finally {
+      setResponding(null)
+    }
+  }
+
+  const projects = tab === 'all' ? visibleAll : myProjects
 
   const tabs = [
-    { key: 'all' as const, label: 'Todos os Projetos', count: allProjects.length },
+    { key: 'all' as const, label: 'Todos os Projetos', count: visibleAll.length },
     { key: 'mine' as const, label: 'Meus Projetos', count: myProjects.length },
   ]
 
-  const projects = tab === 'all' ? allProjects : myProjects
-
   return (
     <div>
-      {/* Tabs */}
       <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit mb-8">
         {tabs.map(t => (
           <button
@@ -79,6 +97,11 @@ export default function AreaProjetosClient({
             }`}>
               {t.count}
             </span>
+            {t.key === 'all' && pendingIds.size > 0 && (
+              <span className="text-xs px-1.5 py-0.5 rounded-full font-bold bg-amber-100 text-amber-700">
+                {pendingIds.size} pendente{pendingIds.size > 1 ? 's' : ''}
+              </span>
+            )}
           </button>
         ))}
       </div>
@@ -89,16 +112,59 @@ export default function AreaProjetosClient({
         />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
-          {projects.map((p, i) => (
-            <ProjectCard key={p.id} projeto={p} index={i} />
-          ))}
-        </div>
-      )}
+          {projects.map((p, i) => {
+            const isPending = pendingIds.has(p.id)
+            const isResponding = responding === p.id
+            return (
+              <div
+                key={p.id}
+                className={`bg-white rounded-xl border border-l-4 ${colors[i % colors.length]} p-5 transition-all ${
+                  isPending
+                    ? 'border-amber-300 shadow-sm ring-1 ring-amber-200'
+                    : 'border-gray-200 hover:shadow-md hover:border-gray-300'
+                }`}
+              >
+                <div className="flex items-center gap-2 mb-3 flex-wrap">
+                  <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${statusBadge(p.status)}`}>
+                    {statusLabel(p.status)}
+                  </span>
+                  {isPending && (
+                    <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-700">
+                      Aguardando resposta
+                    </span>
+                  )}
+                  {p.anoInicio && (
+                    <span className="text-xs text-gray-400">{p.anoInicio}</span>
+                  )}
+                </div>
 
-      {tab === 'mine' && myProjects.length === 0 && (
-        <p className="text-center text-sm text-gray-400 mt-4">
-          Projetos em que você foi adicionado e aceitou aparecerão aqui.
-        </p>
+                <h3 className="font-semibold text-gray-900 leading-snug mb-2">{p.titulo}</h3>
+                {p.descricao && (
+                  <p className="text-sm text-gray-500 leading-relaxed line-clamp-3">{p.descricao}</p>
+                )}
+
+                {isPending && (
+                  <div className="flex gap-2 mt-4">
+                    <button
+                      disabled={isResponding}
+                      onClick={() => respond(p, 'aceito')}
+                      className="flex-1 bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white text-sm font-semibold py-2 rounded-xl transition-colors"
+                    >
+                      {isResponding ? '…' : 'Participar'}
+                    </button>
+                    <button
+                      disabled={isResponding}
+                      onClick={() => respond(p, 'recusado')}
+                      className="flex-1 bg-red-50 hover:bg-red-100 disabled:opacity-50 text-red-600 text-sm font-semibold py-2 rounded-xl border border-red-200 transition-colors"
+                    >
+                      {isResponding ? '…' : 'Recusar'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
       )}
     </div>
   )

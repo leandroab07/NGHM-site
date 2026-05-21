@@ -4,17 +4,35 @@ import type { LabProject } from '@/lib/types'
 
 export default function ProjectNotification() {
   const [pending, setPending] = useState<LabProject[]>([])
-  const [dismissed, setDismissed] = useState(() => {
-    try { return sessionStorage.getItem('nghm-proj-notif-dismissed') === '1' } catch { return false }
-  })
+  const [dismissed, setDismissed] = useState(false)
   const [responding, setResponding] = useState<string | null>(null)
+  const [username, setUsername] = useState<string | null>(null)
 
+  // Get current user first, then check dismiss state and fetch pending
   useEffect(() => {
-    fetch('/api/projects/pending')
-      .then(r => r.ok ? r.json() : [])
-      .then(data => { if (Array.isArray(data)) setPending(data) })
+    fetch('/api/auth/me')
+      .then(r => r.ok ? r.json() : null)
+      .then(user => {
+        if (!user?.username) return
+        setUsername(user.username)
+        try {
+          const key = `nghm-proj-notif-dismissed-${user.username}`
+          setDismissed(sessionStorage.getItem(key) === '1')
+        } catch {}
+        fetch('/api/projects/pending')
+          .then(r => r.ok ? r.json() : [])
+          .then(data => { if (Array.isArray(data)) setPending(data) })
+          .catch(() => {})
+      })
       .catch(() => {})
   }, [])
+
+  function dismiss() {
+    setDismissed(true)
+    if (username) {
+      try { sessionStorage.setItem(`nghm-proj-notif-dismissed-${username}`, '1') } catch {}
+    }
+  }
 
   async function respond(projetoId: string, resposta: 'aceito' | 'recusado') {
     setResponding(projetoId)
@@ -44,10 +62,7 @@ export default function ProjectNotification() {
           </span>
         </div>
         <button
-          onClick={() => {
-            setDismissed(true)
-            try { sessionStorage.setItem('nghm-proj-notif-dismissed', '1') } catch {}
-          }}
+          onClick={dismiss}
           className="text-teal-400 hover:text-teal-600 text-xl leading-none w-6 h-6 flex items-center justify-center rounded"
         >
           ×

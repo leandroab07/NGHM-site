@@ -31,8 +31,25 @@ export async function POST(req: NextRequest) {
   body.id = Date.now().toString()
   body.createdBy = user.username
   body.assignedTo = body.assignedTo ?? []
+
+  // Admin is always automatically part of their own project
+  if (!body.assignedTo.includes(user.username)) {
+    body.assignedTo = [user.username, ...body.assignedTo]
+  }
+
   const { error } = await supabase.from('lab_projects').insert(body)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // Auto-accept for the admin who created the project
+  await supabase.from('project_responses').insert({
+    id: `${body.id}_${user.username}`,
+    projetoId: body.id,
+    username: user.username,
+    name: user.name,
+    resposta: 'aceito',
+    respondidoEm: new Date().toISOString(),
+  })
+
   return NextResponse.json(body, { status: 201 })
 }
 

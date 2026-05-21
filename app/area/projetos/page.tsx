@@ -25,21 +25,29 @@ export default async function AreaProjetosPage() {
 
   const allProjects = await getLabProjects()
 
-  // Respostas do usuário atual
   const { data: rawResponses } = await supabase
     .from('project_responses')
     .select('*')
     .eq('username', user.username)
   const myResponses = (rawResponses ?? []) as ProjectResponse[]
   const acceptedIds = new Set(myResponses.filter(r => r.resposta === 'aceito').map(r => r.projetoId))
+  const respondedIds = new Set(myResponses.map(r => r.projetoId))
 
-  // Projetos visíveis em "Todos": visibility=all sempre, visibility=assigned só se aceitou
+  // Projects pending user's response (assigned but no response yet)
+  const pendingIds = allProjects
+    .filter(p => (p.assignedTo ?? []).includes(user.username) && !respondedIds.has(p.id))
+    .map(p => p.id)
+
+  // "Todos os Projetos": visibility=all always; visibility=assigned if accepted OR pending
   const visibleProjects = allProjects.filter(p => {
     if (p.visibility === 'all') return true
-    return (p.assignedTo ?? []).includes(user.username) && acceptedIds.has(p.id)
+    const assigned = (p.assignedTo ?? []).includes(user.username)
+    if (!assigned) return false
+    const resp = myResponses.find(r => r.projetoId === p.id)
+    return !resp || resp.resposta === 'aceito' // pending or accepted
   })
 
-  // "Meus Projetos": atribuído + aceitou (qualquer visibilidade)
+  // "Meus Projetos": assigned + accepted
   const myProjects = allProjects.filter(
     p => (p.assignedTo ?? []).includes(user.username) && acceptedIds.has(p.id)
   )
@@ -59,6 +67,7 @@ export default async function AreaProjetosPage() {
         <AreaProjetosClient
           allProjects={visibleProjects}
           myProjects={myProjects}
+          pendingIds={pendingIds}
           currentUsername={user.username}
         />
       </div>
