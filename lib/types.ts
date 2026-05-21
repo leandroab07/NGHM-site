@@ -5,8 +5,11 @@ export interface Membro {
   categoria: 'docentes' | 'posdoc' | 'doutorado' | 'mestrado' | 'graduacao'
   foto?: string
   lattes?: string
-  email?: string
+  email?: string      // legado — mantido para compatibilidade
+  emails?: string[]   // múltiplos e-mails
+  telefones?: string[]
   bio?: string
+  username?: string   // vincula ao User para auto-edição
 }
 
 export interface Publicacao {

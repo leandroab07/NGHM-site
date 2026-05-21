@@ -3,7 +3,7 @@ import { useState } from 'react'
 import type { Membro } from '@/lib/types'
 
 const empty: Omit<Membro, 'id'> = {
-  nome: '', cargo: '', categoria: 'graduacao', lattes: '', email: '', bio: '',
+  nome: '', cargo: '', categoria: 'graduacao', lattes: '', email: '', bio: '', username: '',
 }
 
 const categoriaLabels: Record<Membro['categoria'], string> = {
@@ -26,7 +26,7 @@ export default function EquipeAdmin({ initialData }: { initialData: Membro[] }) 
 
   function openEdit(m: Membro) {
     setEditing(m)
-    setForm({ nome: m.nome, cargo: m.cargo, categoria: m.categoria, lattes: m.lattes || '', email: m.email || '', bio: m.bio || '' })
+    setForm({ nome: m.nome, cargo: m.cargo, categoria: m.categoria, lattes: m.lattes || '', email: m.email || '', bio: m.bio || '', username: m.username || '' })
     setShowForm(true)
   }
 
@@ -86,6 +86,10 @@ export default function EquipeAdmin({ initialData }: { initialData: Membro[] }) 
               <input className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
             </div>
             <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Username (login)</label>
+              <input className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Vincula ao usuário para auto-edição" value={form.username ?? ''} onChange={e => setForm({ ...form, username: e.target.value })} />
+            </div>
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Link Lattes</label>
               <input className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" value={form.lattes} onChange={e => setForm({ ...form, lattes: e.target.value })} />
             </div>
@@ -118,6 +122,7 @@ export default function EquipeAdmin({ initialData }: { initialData: Membro[] }) 
               <p className="font-semibold text-gray-900">{m.nome}</p>
               <p className="text-sm text-gray-500">{m.cargo} · {categoriaLabels[m.categoria]}</p>
               {m.email && <p className="text-xs text-gray-400 mt-0.5">{m.email}</p>}
+              {m.username && <p className="text-xs text-teal-500 mt-0.5">@{m.username}</p>}
             </div>
             <div className="flex gap-2 shrink-0">
               <button onClick={() => openEdit(m)} className="text-sm text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors">
