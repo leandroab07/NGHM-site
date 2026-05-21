@@ -17,12 +17,14 @@ export async function GET(req: NextRequest) {
   const user = await getCurrentUser(req)
   if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
-  const { data: eventos } = await supabase
-    .from('eventos')
-    .select('*')
-    .contains('assignedTo', [user.username])
+  // Fetch all events and filter in JS — avoids Supabase text[] contains quirks
+  const { data: allEventos } = await supabase.from('eventos').select('*')
+  const eventos = (allEventos ?? []).filter(
+    (e: { assignedTo?: string[] }) =>
+      Array.isArray(e.assignedTo) && e.assignedTo.includes(user.username)
+  )
 
-  if (!eventos || eventos.length === 0) return NextResponse.json([])
+  if (eventos.length === 0) return NextResponse.json([])
 
   const eventoIds = eventos.map((e: { id: string }) => e.id)
   const { data: responses } = await supabase
