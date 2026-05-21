@@ -94,6 +94,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
           tasks={tasks}
           members={members}
           currentUsername={user.username}
+          isAdmin={isAdmin}
         />
       </div>
     </>

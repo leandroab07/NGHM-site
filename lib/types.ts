@@ -91,7 +91,7 @@ export interface ProjectTask {
   projetoId: string
   titulo: string
   descricao?: string
-  status: 'todo' | 'em_andamento' | 'concluido'
+  status: 'todo' | 'em_andamento' | 'concluido' | 'finalizado'
   assignedTo: string[]   // multiple assignees
   createdBy: string
   created_at?: string
