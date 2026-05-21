@@ -1,0 +1,18 @@
+[
+  {
+    "id": "1",
+    "username": "deboradm",
+    "passwordHash": "a5c5d5ba5e32f3c53bc2c90cefe4cffc:a1bef82f5d863f61ab8ac4aa8f11c599e4bd2e45700ac66592b00cd367070fc348e701d650f243a16758663af789acd89f2de12c258d779c8bb54a7df9c1f214",
+    "role": "admin",
+    "name": "Administradora",
+    "email": ""
+  },
+  {
+    "id": "1779321651475",
+    "username": "leandroab",
+    "passwordHash": "80351ae208ebba99a86070ebe2bc6a49:9ffbffeddb3dcc7ee170f05bc8a2caf255f70a82d8cf2c6ff09cbd1db9f442350c45db307f2832760c3889035829d33db0484f90f8804cd9cc99b7c792c918cb",
+    "role": "member",
+    "name": "Leandro Araújo Basílio",
+    "email": "leandronghm@gmail.com"
+  }
+]
