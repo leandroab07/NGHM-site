@@ -11,7 +11,9 @@ const categoriaLabels: Record<Membro['categoria'], string> = {
   mestrado: 'Mestrado', graduacao: 'Graduação',
 }
 
-export default function EquipeAdmin({ initialData }: { initialData: Membro[] }) {
+type UserOption = { username: string; name: string }
+
+export default function EquipeAdmin({ initialData, userOptions = [] }: { initialData: Membro[]; userOptions?: UserOption[] }) {
   const [membros, setMembros] = useState<Membro[]>(initialData)
   const [editing, setEditing] = useState<Membro | null>(null)
   const [form, setForm] = useState<Omit<Membro, 'id'>>(empty)
@@ -86,8 +88,17 @@ export default function EquipeAdmin({ initialData }: { initialData: Membro[] }) 
               <input className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Username (login)</label>
-              <input className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Vincula ao usuário para auto-edição" value={form.username ?? ''} onChange={e => setForm({ ...form, username: e.target.value })} />
+              <label className="block text-sm font-medium text-gray-700 mb-1">Conta de login vinculada</label>
+              <select
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={form.username ?? ''}
+                onChange={e => setForm({ ...form, username: e.target.value })}
+              >
+                <option value="">— Sem vínculo (membro não pode auto-editar) —</option>
+                {userOptions.map(u => (
+                  <option key={u.username} value={u.username}>{u.name} (@{u.username})</option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Link Lattes</label>

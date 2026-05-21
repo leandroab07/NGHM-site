@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import type { LabProject } from '@/lib/types'
 
 const statusBadge = (s: string) =>
@@ -36,23 +37,24 @@ export default function AreaProjetosClient({
   pendingIds: string[]
   currentUsername: string
 }) {
-  const [tab, setTab] = useState<'all' | 'mine'>('all')
-  const [pendingIds, setPendingIds] = useState<Set<string>>(new Set(initialPendingIds))
+  const router = useRouter()
+  const [tab, setTab]               = useState<'all' | 'mine'>('all')
+  const [pendingIds, setPendingIds]  = useState<Set<string>>(new Set(initialPendingIds))
   const [acceptedExtra, setAcceptedExtra] = useState<LabProject[]>([])
-  const [declinedIds, setDeclinedIds] = useState<Set<string>>(new Set())
-  const [responding, setResponding] = useState<string | null>(null)
+  const [declinedIds, setDeclinedIds]     = useState<Set<string>>(new Set())
+  const [responding, setResponding]       = useState<string | null>(null)
 
   const myProjects = [
     ...initialMy,
     ...acceptedExtra.filter(p => !initialMy.some(m => m.id === p.id)),
   ]
 
-  const visibleAll = allProjects.filter(p => {
-    if (!declinedIds.has(p.id)) return true
-    return p.visibility !== 'assigned'
-  })
+  const visibleAll = allProjects.filter(p =>
+    !(declinedIds.has(p.id) && p.visibility === 'assigned')
+  )
 
-  async function respond(projeto: LabProject, resposta: 'aceito' | 'recusado') {
+  async function respond(projeto: LabProject, resposta: 'aceito' | 'recusado', e: React.MouseEvent) {
+    e.stopPropagation()
     setResponding(projeto.id)
     try {
       const res = await fetch('/api/project-responses', {
@@ -62,22 +64,17 @@ export default function AreaProjetosClient({
       })
       if (res.ok) {
         setPendingIds(prev => { const next = new Set(prev); next.delete(projeto.id); return next })
-        if (resposta === 'aceito') {
-          setAcceptedExtra(prev => [...prev, projeto])
-        } else {
-          setDeclinedIds(prev => new Set([...prev, projeto.id]))
-        }
+        if (resposta === 'aceito') setAcceptedExtra(prev => [...prev, projeto])
+        else setDeclinedIds(prev => new Set([...prev, projeto.id]))
       }
-    } finally {
-      setResponding(null)
-    }
+    } finally { setResponding(null) }
   }
 
   const projects = tab === 'all' ? visibleAll : myProjects
 
   const tabs = [
-    { key: 'all' as const, label: 'Todos os Projetos', count: visibleAll.length },
-    { key: 'mine' as const, label: 'Meus Projetos', count: myProjects.length },
+    { key: 'all' as const,  label: 'Todos os Projetos', count: visibleAll.length },
+    { key: 'mine' as const, label: 'Meus Projetos',     count: myProjects.length },
   ]
 
   return (
@@ -113,28 +110,38 @@ export default function AreaProjetosClient({
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
           {projects.map((p, i) => {
-            const isPending = pendingIds.has(p.id)
+            const isPending   = pendingIds.has(p.id)
             const isResponding = responding === p.id
+            const isAccepted  = !isPending && myProjects.some(m => m.id === p.id)
             return (
               <div
                 key={p.id}
+                onClick={() => { if (!isPending) router.push(`/area/projetos/${p.id}`) }}
                 className={`bg-white rounded-xl border border-l-4 ${colors[i % colors.length]} p-5 transition-all ${
                   isPending
-                    ? 'border-amber-300 shadow-sm ring-1 ring-amber-200'
-                    : 'border-gray-200 hover:shadow-md hover:border-gray-300'
+                    ? 'border-amber-300 shadow-sm ring-1 ring-amber-200 cursor-default'
+                    : 'border-gray-200 hover:shadow-md hover:border-gray-300 cursor-pointer group'
                 }`}
               >
-                <div className="flex items-center gap-2 mb-3 flex-wrap">
-                  <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${statusBadge(p.status)}`}>
-                    {statusLabel(p.status)}
-                  </span>
-                  {isPending && (
-                    <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-700">
-                      Aguardando resposta
+                <div className="flex items-start justify-between gap-2 mb-3 flex-wrap">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${statusBadge(p.status)}`}>
+                      {statusLabel(p.status)}
                     </span>
-                  )}
-                  {p.anoInicio && (
-                    <span className="text-xs text-gray-400">{p.anoInicio}</span>
+                    {isPending && (
+                      <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-700">
+                        Aguardando resposta
+                      </span>
+                    )}
+                    {p.anoInicio && <span className="text-xs text-gray-400">{p.anoInicio}</span>}
+                  </div>
+                  {isAccepted && (
+                    <span className="text-xs text-gray-400 group-hover:text-blue-600 transition-colors flex items-center gap-1 shrink-0">
+                      Abrir
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </span>
                   )}
                 </div>
 
@@ -147,14 +154,14 @@ export default function AreaProjetosClient({
                   <div className="flex gap-2 mt-4">
                     <button
                       disabled={isResponding}
-                      onClick={() => respond(p, 'aceito')}
+                      onClick={e => respond(p, 'aceito', e)}
                       className="flex-1 bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white text-sm font-semibold py-2 rounded-xl transition-colors"
                     >
                       {isResponding ? '…' : 'Participar'}
                     </button>
                     <button
                       disabled={isResponding}
-                      onClick={() => respond(p, 'recusado')}
+                      onClick={e => respond(p, 'recusado', e)}
                       className="flex-1 bg-red-50 hover:bg-red-100 disabled:opacity-50 text-red-600 text-sm font-semibold py-2 rounded-xl border border-red-200 transition-colors"
                     >
                       {isResponding ? '…' : 'Recusar'}

@@ -85,3 +85,15 @@ export interface ProjectResponse {
   resposta: 'aceito' | 'recusado'
   respondidoEm: string
 }
+
+export interface ProjectTask {
+  id: string
+  projetoId: string
+  titulo: string
+  descricao?: string
+  status: 'todo' | 'em_andamento' | 'concluido'
+  assignedTo?: string
+  createdBy: string
+  created_at?: string
+  order?: number
+}
