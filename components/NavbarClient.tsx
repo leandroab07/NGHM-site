@@ -9,7 +9,7 @@ const publicLinks = [
   { href: '/', label: 'Início' },
   { href: '/equipe', label: 'Equipe' },
   { href: '/publicacoes', label: 'Publicações' },
-  { href: '/projetos', label: 'Projetos' },
+  { href: '/projetos', label: 'Linhas de Pesquisa' },
   { href: '/ferramentas', label: 'Ferramentas' },
 ]
 

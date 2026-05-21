@@ -37,7 +37,7 @@ export default function Footer() {
                 ['/', 'Início'],
                 ['/equipe', 'Equipe'],
                 ['/publicacoes', 'Publicações'],
-                ['/projetos', 'Projetos de Pesquisa'],
+                ['/projetos', 'Linhas de Pesquisa'],
                 ['/ferramentas', 'Ferramentas'],
               ].map(([href, label]) => (
                 <li key={href}>

@@ -3,7 +3,7 @@ import { getProjetos } from '@/lib/data'
 import type { Projeto } from '@/lib/types'
 
 export const metadata: Metadata = {
-  title: 'Projetos de Pesquisa',
+  title: 'Linhas de Pesquisa',
   description:
     'Linhas de pesquisa do NGHM-UFES: oncologia translacional, genética do câncer, bioinformática, seguimento farmacoterapêutico em oncologia e genética da COVID longa.',
   alternates: { canonical: 'https://nghm.vercel.app/projetos' },
@@ -34,7 +34,7 @@ export default async function ProjetosPage() {
     <>
       <section className="bg-white border-b border-gray-100 py-10 sm:py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">Projetos de Pesquisa</h1>
+          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">Linhas de Pesquisa</h1>
           <p className="text-gray-500 text-base sm:text-lg max-w-2xl">
             Linhas de investigação científica em andamento e concluídas pelo NGHM.
           </p>
