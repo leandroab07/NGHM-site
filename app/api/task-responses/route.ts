@@ -13,11 +13,23 @@ async function getCurrentUser(req: NextRequest) {
   return users.find(u => u.username === payload.sub) ?? null
 }
 
-// GET /api/task-responses?eventoId=xxx
+// GET /api/task-responses?eventoId=xxx  → respostas de um evento (para admin)
+// GET /api/task-responses?mine=true     → respostas do usuário atual (para membro)
 export async function GET(req: NextRequest) {
   const user = await getCurrentUser(req)
   if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+
   const eventoId = req.nextUrl.searchParams.get('eventoId')
+  const mine     = req.nextUrl.searchParams.get('mine')
+
+  if (mine === 'true') {
+    const { data } = await supabase
+      .from('task_responses')
+      .select('*')
+      .eq('username', user.username)
+    return NextResponse.json(data ?? [])
+  }
+
   if (!eventoId) return NextResponse.json([])
   const { data } = await supabase
     .from('task_responses')

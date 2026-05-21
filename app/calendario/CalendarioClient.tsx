@@ -27,15 +27,32 @@ const COL7 = { display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))'
 
 function MeusCompromissos({ eventos, currentUsername }: { eventos: Evento[]; currentUsername: string }) {
   const [selectedEvento, setSelectedEvento] = useState<Evento | null>(null)
+  const [selectedMode, setSelectedMode]     = useState<'criada' | 'aceita'>('criada')
   const [responses, setResponses]           = useState<TaskResponse[]>([])
+  const [acceptedIds, setAcceptedIds]       = useState<Set<string>>(new Set())
   const [loadingId, setLoadingId]           = useState<string | null>(null)
+  const [loadingMine, setLoadingMine]       = useState(true)
 
-  const mine = eventos
-    .filter(e => e.createdBy === currentUsername)
-    .sort((a, b) => a.data.localeCompare(b.data))
+  useEffect(() => {
+    fetch('/api/task-responses?mine=true')
+      .then(r => r.ok ? r.json() : [])
+      .then((data: TaskResponse[]) => {
+        if (!Array.isArray(data)) return
+        setAcceptedIds(new Set(
+          data.filter(r => r.resposta === 'aceito').map(r => r.eventoId)
+        ))
+      })
+      .catch(() => {})
+      .finally(() => setLoadingMine(false))
+  }, [])
 
-  async function openTask(e: Evento) {
+  const criadas  = eventos.filter(e => e.createdBy === currentUsername).sort((a, b) => a.data.localeCompare(b.data))
+  const aceitas  = eventos.filter(e => acceptedIds.has(e.id)).sort((a, b) => a.data.localeCompare(b.data))
+  const total    = criadas.length + aceitas.length
+
+  async function openTask(e: Evento, mode: 'criada' | 'aceita') {
     setSelectedEvento(e)
+    setSelectedMode(mode)
     setLoadingId(e.id)
     try {
       const res = await fetch(`/api/task-responses?eventoId=${e.id}`)
@@ -50,6 +67,47 @@ function MeusCompromissos({ eventos, currentUsername }: { eventos: Evento[]; cur
     })
   }
 
+  function TaskCard({ e, mode }: { e: Evento; mode: 'criada' | 'aceita' }) {
+    const cfg        = catConfig[e.categoria as Cat]
+    const hex        = cfg?.hex ?? '#9ca3af'
+    const isSelected = selectedEvento?.id === e.id
+    return (
+      <button
+        onClick={() => openTask(e, mode)}
+        className={`w-full text-left bg-white border rounded-2xl p-4 transition-all hover:shadow-md ${
+          isSelected ? 'border-blue-400 ring-2 ring-blue-200' : 'border-gray-200 hover:border-gray-300'
+        }`}
+      >
+        <div className="flex items-start gap-3">
+          <div style={{ width: 4, backgroundColor: hex, alignSelf: 'stretch', borderRadius: 4, flexShrink: 0 }} />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
+              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full text-white" style={{ backgroundColor: hex }}>
+                {cfg?.label}
+              </span>
+              {mode === 'aceita' && (
+                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-700">Aceita</span>
+              )}
+              {e.hora && <span className="text-xs text-gray-400">{e.hora}</span>}
+              {loadingId === e.id && <span className="text-xs text-blue-400 animate-pulse">carregando...</span>}
+            </div>
+            <p className="font-bold text-gray-900">{e.titulo}</p>
+            <p className="text-sm text-gray-400 mt-0.5">
+              {new Date(e.data + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}
+            </p>
+            {e.descricao && <p className="text-xs text-gray-500 mt-1 line-clamp-2">{e.descricao}</p>}
+            {mode === 'criada' && (e.assignedTo ?? []).length > 0 && (
+              <p className="text-xs text-teal-600 mt-1">
+                {e.assignedTo!.length} membro{e.assignedTo!.length > 1 ? 's' : ''} marcado{e.assignedTo!.length > 1 ? 's' : ''}
+              </p>
+            )}
+          </div>
+          <span className="text-gray-300 text-xl leading-none self-center shrink-0">›</span>
+        </div>
+      </button>
+    )
+  }
+
   const assigned     = selectedEvento?.assignedTo ?? []
   const accepted     = responses.filter(r => r.resposta === 'aceito')
   const declined     = responses.filter(r => r.resposta === 'recusado')
@@ -58,59 +116,45 @@ function MeusCompromissos({ eventos, currentUsername }: { eventos: Evento[]; cur
 
   return (
     <div className="flex flex-col md:flex-row gap-6 items-start">
-      {/* Task list */}
+      {/* Lista */}
       <div className="w-full md:flex-1 min-w-0">
-        {mine.length === 0 ? (
+        {loadingMine ? (
+          <div className="text-center py-16 text-gray-400">
+            <p className="animate-pulse">Carregando...</p>
+          </div>
+        ) : total === 0 ? (
           <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-gray-200">
             <div className="text-5xl mb-4">📋</div>
-            <p className="font-semibold text-gray-500 text-lg">Nenhuma tarefa criada por você.</p>
-            <p className="text-gray-400 text-sm mt-1">Crie tarefas no painel de administração.</p>
+            <p className="font-semibold text-gray-500 text-lg">Nenhum compromisso ainda.</p>
+            <p className="text-gray-400 text-sm mt-1">Suas tarefas criadas e aceitas aparecerão aqui.</p>
           </div>
         ) : (
-          <div className="space-y-3">
-            {mine.map(e => {
-              const cfg = catConfig[e.categoria as Cat]
-              const hex = cfg?.hex ?? '#9ca3af'
-              const isSelected = selectedEvento?.id === e.id
-              return (
-                <button
-                  key={e.id}
-                  onClick={() => openTask(e)}
-                  className={`w-full text-left bg-white border rounded-2xl p-4 transition-all hover:shadow-md ${
-                    isSelected ? 'border-blue-400 ring-2 ring-blue-200' : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div style={{ width: 4, backgroundColor: hex, alignSelf: 'stretch', borderRadius: 4, flexShrink: 0 }} />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <span className="text-[11px] font-bold px-2 py-0.5 rounded-full text-white" style={{ backgroundColor: hex }}>
-                          {cfg?.label}
-                        </span>
-                        {e.hora && <span className="text-xs text-gray-400">{e.hora}</span>}
-                        {loadingId === e.id && <span className="text-xs text-blue-400 animate-pulse">carregando...</span>}
-                      </div>
-                      <p className="font-bold text-gray-900">{e.titulo}</p>
-                      <p className="text-sm text-gray-400 mt-0.5">
-                        {new Date(e.data + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}
-                      </p>
-                      {e.descricao && <p className="text-xs text-gray-500 mt-1 line-clamp-2">{e.descricao}</p>}
-                      {(e.assignedTo ?? []).length > 0 && (
-                        <p className="text-xs text-teal-600 mt-1">
-                          {e.assignedTo!.length} membro{e.assignedTo!.length > 1 ? 's' : ''} marcado{e.assignedTo!.length > 1 ? 's' : ''}
-                        </p>
-                      )}
-                    </div>
-                    <span className="text-gray-300 text-xl leading-none self-center shrink-0">›</span>
-                  </div>
-                </button>
-              )
-            })}
+          <div className="space-y-8">
+            {criadas.length > 0 && (
+              <section>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-blue-400" /> Tarefas que criei ({criadas.length})
+                </p>
+                <div className="space-y-3">
+                  {criadas.map(e => <TaskCard key={e.id} e={e} mode="criada" />)}
+                </div>
+              </section>
+            )}
+            {aceitas.length > 0 && (
+              <section>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-green-400" /> Tarefas que aceitei ({aceitas.length})
+                </p>
+                <div className="space-y-3">
+                  {aceitas.map(e => <TaskCard key={e.id} e={e} mode="aceita" />)}
+                </div>
+              </section>
+            )}
           </div>
         )}
       </div>
 
-      {/* Detail panel */}
+      {/* Painel de detalhe */}
       <div className="w-full md:w-80 shrink-0">
         {selectedEvento ? (
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
@@ -130,49 +174,64 @@ function MeusCompromissos({ eventos, currentUsername }: { eventos: Evento[]; cur
                 >×</button>
               </div>
             </div>
+
             <div className="p-5 space-y-4">
               {selectedEvento.descricao && (
                 <p className="text-sm text-gray-600 leading-relaxed">{selectedEvento.descricao}</p>
               )}
-              {assigned.length === 0 ? (
-                <p className="text-sm text-gray-400 text-center py-4">Nenhum membro marcado nesta tarefa.</p>
-              ) : (
+
+              {/* Tarefa aceita pelo usuário — mostra só detalhes */}
+              {selectedMode === 'aceita' && (
+                <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-3 py-2">
+                  <span className="text-green-500 text-sm">✓</span>
+                  <span className="text-sm font-semibold text-green-700">Você aceitou esta tarefa</span>
+                </div>
+              )}
+
+              {/* Tarefa criada — mostra respostas dos membros */}
+              {selectedMode === 'criada' && (
                 <>
-                  {accepted.length > 0 && (
-                    <div>
-                      <p className="text-xs font-bold text-green-600 uppercase tracking-wider mb-2">✓ Aceitaram ({accepted.length})</p>
-                      <ul className="space-y-1">
-                        {accepted.map(r => (
-                          <li key={r.username} className="flex items-center gap-2 text-sm text-gray-700">
-                            <span className="w-2 h-2 rounded-full bg-green-400 shrink-0" />{r.name}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  {declined.length > 0 && (
-                    <div>
-                      <p className="text-xs font-bold text-red-500 uppercase tracking-wider mb-2">✕ Recusaram ({declined.length})</p>
-                      <ul className="space-y-1">
-                        {declined.map(r => (
-                          <li key={r.username} className="flex items-center gap-2 text-sm text-gray-700">
-                            <span className="w-2 h-2 rounded-full bg-red-400 shrink-0" />{r.name}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  {pending.length > 0 && (
-                    <div>
-                      <p className="text-xs font-bold text-amber-500 uppercase tracking-wider mb-2">⏳ Aguardando ({pending.length})</p>
-                      <ul className="space-y-1">
-                        {pending.map(u => (
-                          <li key={u} className="flex items-center gap-2 text-sm text-gray-500">
-                            <span className="w-2 h-2 rounded-full bg-amber-300 shrink-0" />@{u}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
+                  {assigned.length === 0 ? (
+                    <p className="text-sm text-gray-400 text-center py-4">Nenhum membro marcado nesta tarefa.</p>
+                  ) : (
+                    <>
+                      {accepted.length > 0 && (
+                        <div>
+                          <p className="text-xs font-bold text-green-600 uppercase tracking-wider mb-2">✓ Aceitaram ({accepted.length})</p>
+                          <ul className="space-y-1">
+                            {accepted.map(r => (
+                              <li key={r.username} className="flex items-center gap-2 text-sm text-gray-700">
+                                <span className="w-2 h-2 rounded-full bg-green-400 shrink-0" />{r.name}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {declined.length > 0 && (
+                        <div>
+                          <p className="text-xs font-bold text-red-500 uppercase tracking-wider mb-2">✕ Recusaram ({declined.length})</p>
+                          <ul className="space-y-1">
+                            {declined.map(r => (
+                              <li key={r.username} className="flex items-center gap-2 text-sm text-gray-700">
+                                <span className="w-2 h-2 rounded-full bg-red-400 shrink-0" />{r.name}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {pending.length > 0 && (
+                        <div>
+                          <p className="text-xs font-bold text-amber-500 uppercase tracking-wider mb-2">⏳ Aguardando ({pending.length})</p>
+                          <ul className="space-y-1">
+                            {pending.map(u => (
+                              <li key={u} className="flex items-center gap-2 text-sm text-gray-500">
+                                <span className="w-2 h-2 rounded-full bg-amber-300 shrink-0" />@{u}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </>
                   )}
                 </>
               )}
@@ -180,7 +239,7 @@ function MeusCompromissos({ eventos, currentUsername }: { eventos: Evento[]; cur
           </div>
         ) : (
           <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-6 text-center">
-            <p className="text-sm text-gray-400">Clique em uma tarefa para ver os detalhes de resposta.</p>
+            <p className="text-sm text-gray-400">Clique em uma tarefa para ver os detalhes.</p>
           </div>
         )}
       </div>
