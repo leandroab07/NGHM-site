@@ -1,49 +1,72 @@
 'use client'
 import { useState } from 'react'
-import type { Evento } from '@/lib/types'
+import type { Evento, PublicUser } from '@/lib/types'
 import { catConfig } from '@/app/calendario/CalendarioClient'
 
 type Cat = keyof typeof catConfig
 
-const empty: Omit<Evento, 'id'> = {
+const emptyForm = (): Omit<Evento, 'id'> => ({
   titulo: '',
   data: new Date().toISOString().split('T')[0],
   hora: '',
   descricao: '',
   categoria: 'outro',
-}
+  assignedTo: [],
+})
 
 function fmtDate(iso: string) {
   return new Date(iso + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
-export default function EventosAdmin({ initialData }: { initialData: Evento[] }) {
+export default function EventosAdmin({ initialData, members }: { initialData: Evento[]; members: PublicUser[] }) {
   const [eventos, setEventos] = useState<Evento[]>(
     [...initialData].sort((a, b) => a.data.localeCompare(b.data))
   )
-  const [editing, setEditing] = useState<Evento | null>(null)
-  const [form, setForm] = useState<Omit<Evento, 'id'>>(empty)
+  const [editing, setEditing]   = useState<Evento | null>(null)
+  const [form, setForm]         = useState<Omit<Evento, 'id'>>(emptyForm())
   const [showForm, setShowForm] = useState(false)
-  const [saving, setSaving] = useState(false)
+  const [saving, setSaving]     = useState(false)
 
   function openNew() {
     setEditing(null)
-    setForm(empty)
+    setForm(emptyForm())
     setShowForm(true)
     setTimeout(() => document.getElementById('form-titulo')?.focus(), 50)
   }
 
   function openEdit(e: Evento) {
     setEditing(e)
-    setForm({ titulo: e.titulo, data: e.data, hora: e.hora ?? '', descricao: e.descricao ?? '', categoria: e.categoria })
+    setForm({
+      titulo: e.titulo,
+      data: e.data,
+      hora: e.hora ?? '',
+      descricao: e.descricao ?? '',
+      categoria: e.categoria,
+      assignedTo: e.assignedTo ?? [],
+    })
     setShowForm(true)
+  }
+
+  function toggleMember(username: string) {
+    const current = form.assignedTo ?? []
+    setForm({
+      ...form,
+      assignedTo: current.includes(username)
+        ? current.filter(u => u !== username)
+        : [...current, username],
+    })
   }
 
   async function handleSave() {
     if (!form.titulo || !form.data) return
     setSaving(true)
     try {
-      const body = { ...form, hora: form.hora || undefined, descricao: form.descricao || undefined }
+      const body = {
+        ...form,
+        hora: form.hora || undefined,
+        descricao: form.descricao || undefined,
+        assignedTo: form.assignedTo ?? [],
+      }
       if (editing) {
         const res = await fetch('/api/admin/eventos', {
           method: 'PUT', headers: { 'Content-Type': 'application/json' },
@@ -72,7 +95,7 @@ export default function EventosAdmin({ initialData }: { initialData: Evento[] })
     setEventos(prev => prev.filter(e => e.id !== id))
   }
 
-  const today = new Date().toISOString().split('T')[0]
+  const today    = new Date().toISOString().split('T')[0]
   const proximos = eventos.filter(e => e.data >= today)
   const passados = eventos.filter(e => e.data < today)
 
@@ -158,6 +181,39 @@ export default function EventosAdmin({ initialData }: { initialData: Evento[] })
                 onChange={e => setForm({ ...form, descricao: e.target.value })}
               />
             </div>
+
+            {members.length > 0 && (
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Marcar membros (opcional)
+                  <span className="ml-1 text-xs font-normal text-gray-400">— receberão notificação para aceitar ou recusar</span>
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {members.map(m => {
+                    const selected = (form.assignedTo ?? []).includes(m.username)
+                    return (
+                      <button
+                        key={m.username}
+                        type="button"
+                        onClick={() => toggleMember(m.username)}
+                        className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm transition-all text-left ${
+                          selected
+                            ? 'border-teal-400 bg-teal-50 text-teal-800'
+                            : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50'
+                        }`}
+                      >
+                        <span className={`w-4 h-4 rounded border flex-shrink-0 flex items-center justify-center text-xs ${
+                          selected ? 'bg-teal-500 border-teal-500 text-white' : 'border-gray-300'
+                        }`}>
+                          {selected && '✓'}
+                        </span>
+                        <span className="truncate">{m.name}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="flex gap-3 mt-4">
@@ -222,9 +278,14 @@ function EventoItem({ e, onEdit, onDelete }: { e: Evento; onEdit: (e: Evento) =>
         <div className={`w-1 self-stretch rounded-full ${cfg?.color}`} />
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-gray-900 truncate">{e.titulo}</p>
-          <div className="flex items-center gap-3 mt-0.5">
+          <div className="flex items-center gap-3 mt-0.5 flex-wrap">
             <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${cfg?.light}`}>{cfg?.label}</span>
             <span className="text-xs text-gray-400">{fmtDate(e.data)}{e.hora ? ` · ${e.hora}` : ''}</span>
+            {e.assignedTo && e.assignedTo.length > 0 && (
+              <span className="text-xs text-teal-600 bg-teal-50 px-2 py-0.5 rounded-full">
+                {e.assignedTo.length} marcado{e.assignedTo.length > 1 ? 's' : ''}
+              </span>
+            )}
           </div>
           {e.descricao && <p className="text-xs text-gray-400 mt-1 truncate">{e.descricao}</p>}
         </div>

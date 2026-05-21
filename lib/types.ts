@@ -38,6 +38,17 @@ export interface Evento {
   hora?: string      // HH:MM
   descricao?: string
   categoria: 'prova' | 'reuniao' | 'prazo' | 'aula' | 'evento' | 'outro'
+  assignedTo?: string[]  // usernames marcados
+  createdBy?: string     // username de quem criou
+}
+
+export interface TaskResponse {
+  id: string
+  eventoId: string
+  username: string
+  name: string
+  resposta: 'aceito' | 'recusado'
+  respondidoEm: string
 }
 
 export interface User {

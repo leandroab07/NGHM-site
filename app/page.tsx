@@ -27,18 +27,18 @@ export default async function HomePage() {
           <div className="absolute top-10 left-10 w-72 h-72 rounded-full bg-teal-400 blur-3xl" />
           <div className="absolute bottom-0 right-10 w-96 h-96 rounded-full bg-blue-400 blur-3xl" />
         </div>
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-32">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 md:py-32">
           <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 text-sm text-blue-100 mb-6">
-              <span className="w-2 h-2 bg-teal-400 rounded-full animate-pulse" />
+            <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-3 py-1.5 text-xs sm:text-sm text-blue-100 mb-5 sm:mb-6">
+              <span className="w-2 h-2 bg-teal-400 rounded-full animate-pulse shrink-0" />
               Universidade Federal do Espírito Santo
             </div>
-            <h1 className="text-4xl md:text-6xl font-bold leading-tight mb-6">
+            <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold leading-tight mb-5 sm:mb-6">
               Núcleo de{' '}
               <span className="text-teal-300">Genética Humana</span>{' '}
               e Molecular
             </h1>
-            <p className="text-lg md:text-xl text-blue-100 leading-relaxed mb-8 max-w-2xl">
+            <p className="text-base sm:text-lg md:text-xl text-blue-100 leading-relaxed mb-7 sm:mb-8 max-w-2xl">
               Pesquisa de ponta em genômica, epigenética e biologia molecular para compreender e combater
               doenças humanas. Vinculado ao Departamento de Ciências Biológicas da UFES.
             </p>
@@ -62,12 +62,12 @@ export default async function HomePage() {
 
       {/* Recent Publications */}
       {recentPubs.length > 0 && (
-        <section className="py-16 bg-white">
+        <section className="py-12 sm:py-16 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-end justify-between mb-10">
+            <div className="flex items-end justify-between mb-8 sm:mb-10">
               <div>
-                <h2 className="text-3xl font-bold text-gray-900 mb-2">Publicações Recentes</h2>
-                <p className="text-gray-500">Produção científica do nosso laboratório</p>
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Publicações Recentes</h2>
+                <p className="text-gray-500 text-sm sm:text-base">Produção científica do nosso laboratório</p>
               </div>
               <Link href="/publicacoes" className="text-blue-600 hover:text-blue-700 font-medium text-sm hidden sm:block">
                 Ver todas →
@@ -104,12 +104,12 @@ export default async function HomePage() {
       )}
 
       {/* Upcoming Events — visível apenas para usuários logados */}
-      {isLoggedIn && <section className="py-16 bg-gradient-to-br from-slate-50 to-blue-50">
+      {isLoggedIn && <section className="py-12 sm:py-16 bg-gradient-to-br from-slate-50 to-blue-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-end justify-between mb-10">
+          <div className="flex items-end justify-between mb-8 sm:mb-10">
             <div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">Agenda do Laboratório</h2>
-              <p className="text-gray-500">Próximas tarefas e eventos agendados</p>
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Agenda do Laboratório</h2>
+              <p className="text-gray-500 text-sm sm:text-base">Próximas tarefas e eventos agendados</p>
             </div>
             <Link href="/calendario" className="text-blue-600 hover:text-blue-700 font-medium text-sm hidden sm:block">
               Ver calendário completo →
@@ -150,10 +150,10 @@ export default async function HomePage() {
       </section>}
 
       {/* CTA */}
-      <section className="py-16 bg-gray-50 border-t border-gray-100">
+      <section className="py-12 sm:py-16 bg-gray-50 border-t border-gray-100">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">Faça parte da nossa pesquisa</h2>
-          <p className="text-gray-500 text-lg mb-8 max-w-2xl mx-auto">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">Faça parte da nossa pesquisa</h2>
+          <p className="text-gray-500 text-base sm:text-lg mb-7 sm:mb-8 max-w-2xl mx-auto">
             Interessado em colaborar ou participar do NGHM? Entre em contato conosco.
           </p>
           <a
