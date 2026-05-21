@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
     titulo: body.titulo.trim(),
     descricao: body.descricao ?? '',
     status: body.status ?? 'todo',
-    assignedTo: body.assignedTo ?? '',
+    assignedTo: Array.isArray(body.assignedTo) ? body.assignedTo : [],
     createdBy: user.username,
     order: body.order ?? 0,
   }

@@ -92,7 +92,7 @@ export interface ProjectTask {
   titulo: string
   descricao?: string
   status: 'todo' | 'em_andamento' | 'concluido'
-  assignedTo?: string
+  assignedTo: string[]   // multiple assignees
   createdBy: string
   created_at?: string
   order?: number
