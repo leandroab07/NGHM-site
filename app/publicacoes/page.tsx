@@ -1,3 +1,12 @@
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Publicações Científicas',
+  description:
+    'Produção científica do NGHM-UFES: artigos em revistas internacionais, teses, dissertações e livros em genética humana, oncologia e bioinformática.',
+  alternates: { canonical: 'https://nghm.vercel.app/publicacoes' },
+}
+
 export default function PublicacoesPage() {
   return (
     <>

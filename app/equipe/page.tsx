@@ -1,5 +1,13 @@
+import type { Metadata } from 'next'
 import { getEquipe } from '@/lib/data'
 import type { Membro } from '@/lib/types'
+
+export const metadata: Metadata = {
+  title: 'Nossa Equipe',
+  description:
+    'Conheça os pesquisadores, estudantes de pós-graduação e graduação do Núcleo de Genética Humana e Molecular da UFES.',
+  alternates: { canonical: 'https://nghm.vercel.app/equipe' },
+}
 
 const categoriaLabel: Record<Membro['categoria'], string> = {
   docentes:  'Docentes',

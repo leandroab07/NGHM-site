@@ -1,4 +1,11 @@
+import type { Metadata } from 'next'
 import { cookies } from 'next/headers'
+
+export const metadata: Metadata = {
+  title: 'Calendário do Laboratório',
+  description: 'Agenda de tarefas, provas, reuniões e eventos do NGHM-UFES.',
+  robots: { index: false },
+}
 import { verifyToken } from '@/lib/auth'
 import { getUsers, getEventos } from '@/lib/data'
 import CalendarioClient from './CalendarioClient'

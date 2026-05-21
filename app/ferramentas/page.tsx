@@ -1,3 +1,12 @@
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Ferramentas Bioinformáticas',
+  description:
+    'Softwares, pipelines e plataformas bioinformáticas desenvolvidas e utilizadas pelo NGHM-UFES na análise de dados genômicos e moleculares.',
+  alternates: { canonical: 'https://nghm.vercel.app/ferramentas' },
+}
+
 export default function FerramentasPage() {
   return (
     <>

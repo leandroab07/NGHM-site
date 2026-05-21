@@ -1,5 +1,13 @@
+import type { Metadata } from 'next'
 import { getProjetos } from '@/lib/data'
 import type { Projeto } from '@/lib/types'
+
+export const metadata: Metadata = {
+  title: 'Projetos de Pesquisa',
+  description:
+    'Linhas de pesquisa do NGHM-UFES: oncologia translacional, genética do câncer, bioinformática, seguimento farmacoterapêutico em oncologia e genética da COVID longa.',
+  alternates: { canonical: 'https://nghm.vercel.app/projetos' },
+}
 
 const statusConfig = {
   em_andamento: { label: 'Em andamento', class: 'bg-green-100 text-green-700' },
