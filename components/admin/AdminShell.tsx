@@ -9,7 +9,8 @@ const navItems = [
   { href: '/admin/equipe', label: 'Equipe', icon: '👥' },
   { href: '/admin/publicacoes', label: 'Publicações', icon: '📄' },
   { href: '/admin/eventos', label: 'Calendário', icon: '📅' },
-  { href: '/admin/projetos', label: 'Projetos', icon: '🔭' },
+  { href: '/admin/projetos', label: 'Linhas de Pesquisa', icon: '🔭' },
+  { href: '/admin/lab-projetos', label: 'Proj. Internos', icon: '📁' },
 ]
 
 export default function AdminShell({ children }: { children: React.ReactNode }) {

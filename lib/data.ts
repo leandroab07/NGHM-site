@@ -1,7 +1,7 @@
 import { cache } from 'react'
 import { supabase } from './supabase'
 import { hashPassword } from './auth'
-import type { Membro, Publicacao, Projeto, Evento, User } from './types'
+import type { Membro, Publicacao, Projeto, Evento, User, LabProject } from './types'
 
 export async function getEquipe(): Promise<Membro[]> {
   const { data } = await supabase.from('equipe').select('*').order('nome')
@@ -21,6 +21,11 @@ export async function getProjetos(): Promise<Projeto[]> {
 export async function getEventos(): Promise<Evento[]> {
   const { data } = await supabase.from('eventos').select('*')
   return (data ?? []) as Evento[]
+}
+
+export async function getLabProjects(): Promise<LabProject[]> {
+  const { data } = await supabase.from('lab_projects').select('*').order('created_at', { ascending: false })
+  return (data ?? []) as LabProject[]
 }
 
 export const getUsers = cache(async (): Promise<User[]> => {

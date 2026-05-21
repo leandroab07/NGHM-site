@@ -61,3 +61,24 @@ export interface User {
 }
 
 export type PublicUser = Omit<User, 'passwordHash'>
+
+export interface LabProject {
+  id: string
+  titulo: string
+  descricao?: string
+  status: 'em_andamento' | 'concluido'
+  visibility: 'all' | 'assigned'
+  assignedTo: string[]
+  createdBy: string
+  anoInicio?: number
+  created_at?: string
+}
+
+export interface ProjectResponse {
+  id: string
+  projetoId: string
+  username: string
+  name: string
+  resposta: 'aceito' | 'recusado'
+  respondidoEm: string
+}
