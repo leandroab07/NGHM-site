@@ -90,6 +90,7 @@ export default function EquipeClient({
   const [editTarget, setEditTarget] = useState<Membro | null>(null)
   const [form, setForm] = useState<EditForm | null>(null)
   const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   const grupos = categoriaOrder
     .map(cat => ({ cat, membros: equipe.filter(m => m.categoria === cat) }))
@@ -98,29 +99,39 @@ export default function EquipeClient({
   function openEdit(m: Membro) {
     setEditTarget(m)
     setForm(toForm(m))
+    setSaveError(null)
   }
 
-  function closeEdit() { setEditTarget(null); setForm(null) }
+  function closeEdit() { setEditTarget(null); setForm(null); setSaveError(null) }
 
   async function handleSave() {
     if (!form || !editTarget) return
     setSaving(true)
+    setSaveError(null)
     try {
-      const isSelf = editTarget.username === currentUsername && !isAdmin
+      const isSelf = !isAdmin && !!currentUsername && editTarget.username === currentUsername
       const url    = isSelf ? '/api/equipe/me' : '/api/admin/equipe'
-      const body   = isSelf ? form : { ...form, id: editTarget.id, nome: editTarget.nome, username: editTarget.username }
+      const payload = isSelf
+        ? form
+        : { ...form, id: editTarget.id, nome: editTarget.nome, username: editTarget.username }
 
       const res     = await fetch(url, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(isSelf ? form : body),
+        body: JSON.stringify(payload),
       })
-      const updated = await res.json()
+      const json = await res.json()
       if (res.ok) {
-        setEquipe(prev => prev.map(m => m.id === editTarget.id ? { ...m, ...updated } : m))
+        setEquipe(prev => prev.map(m => m.id === editTarget.id ? { ...m, ...json } : m))
         closeEdit()
+      } else {
+        setSaveError(json?.error ?? `Erro ${res.status}`)
       }
-    } finally { setSaving(false) }
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Erro desconhecido')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -306,20 +317,27 @@ export default function EquipeClient({
               </div>
             </div>
 
-            <div className="px-6 py-4 border-t border-gray-100 flex gap-3">
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-semibold py-2.5 rounded-xl transition-colors"
-              >
-                {saving ? 'Salvando…' : 'Salvar alterações'}
-              </button>
-              <button
-                onClick={closeEdit}
-                className="px-5 py-2.5 border border-gray-200 hover:bg-gray-50 text-gray-600 text-sm font-medium rounded-xl transition-colors"
-              >
-                Cancelar
-              </button>
+            <div className="px-6 py-4 border-t border-gray-100 space-y-3">
+              {saveError && (
+                <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-2.5">
+                  {saveError}
+                </p>
+              )}
+              <div className="flex gap-3">
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-semibold py-2.5 rounded-xl transition-colors"
+                >
+                  {saving ? 'Salvando…' : 'Salvar alterações'}
+                </button>
+                <button
+                  onClick={closeEdit}
+                  className="px-5 py-2.5 border border-gray-200 hover:bg-gray-50 text-gray-600 text-sm font-medium rounded-xl transition-colors"
+                >
+                  Cancelar
+                </button>
+              </div>
             </div>
           </div>
         </div>
