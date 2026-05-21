@@ -22,32 +22,36 @@ export default async function HomePage() {
   return (
     <>
       {/* Hero */}
-      <section className="bg-white border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28">
+      <section className="relative bg-gradient-to-br from-blue-900 via-blue-800 to-teal-700 text-white overflow-hidden">
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-10 left-10 w-72 h-72 rounded-full bg-teal-400 blur-3xl" />
+          <div className="absolute bottom-0 right-10 w-96 h-96 rounded-full bg-blue-400 blur-3xl" />
+        </div>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-32">
           <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 bg-teal-50 border border-teal-100 rounded-full px-4 py-1.5 text-sm text-teal-700 mb-6">
+            <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 text-sm text-blue-100 mb-6">
               <span className="w-2 h-2 bg-teal-400 rounded-full animate-pulse" />
               Universidade Federal do Espírito Santo
             </div>
-            <h1 className="text-4xl md:text-6xl font-bold leading-tight text-gray-900 mb-6">
+            <h1 className="text-4xl md:text-6xl font-bold leading-tight mb-6">
               Núcleo de{' '}
-              <span className="text-teal-600">Genética Humana</span>{' '}
+              <span className="text-teal-300">Genética Humana</span>{' '}
               e Molecular
             </h1>
-            <p className="text-lg md:text-xl text-gray-500 leading-relaxed mb-8 max-w-2xl">
+            <p className="text-lg md:text-xl text-blue-100 leading-relaxed mb-8 max-w-2xl">
               Pesquisa de ponta em genômica, epigenética e biologia molecular para compreender e combater
               doenças humanas. Vinculado ao Departamento de Ciências Biológicas da UFES.
             </p>
             <div className="flex flex-wrap gap-4">
               <Link
                 href="/projetos"
-                className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-6 py-3 rounded-xl transition-all hover:shadow-md hover:-translate-y-0.5"
+                className="bg-teal-500 hover:bg-teal-400 text-white font-semibold px-6 py-3 rounded-xl transition-all hover:shadow-lg hover:-translate-y-0.5"
               >
                 Ver Projetos
               </Link>
               <Link
                 href="/publicacoes"
-                className="text-gray-700 font-semibold px-6 py-3 rounded-xl border border-gray-200 hover:bg-gray-50 transition-all hover:-translate-y-0.5"
+                className="bg-white/10 hover:bg-white/20 text-white font-semibold px-6 py-3 rounded-xl border border-white/20 transition-all hover:-translate-y-0.5"
               >
                 Publicações
               </Link>
@@ -154,7 +158,7 @@ export default async function HomePage() {
           </p>
           <a
             href="mailto:nghm@ufes.br"
-            className="inline-block bg-teal-600 hover:bg-teal-700 text-white font-bold px-8 py-3 rounded-xl hover:shadow-md hover:-translate-y-0.5 transition-all"
+            className="inline-block bg-blue-700 hover:bg-blue-800 text-white font-bold px-8 py-3 rounded-xl hover:shadow-md hover:-translate-y-0.5 transition-all"
           >
             Entre em Contato
           </a>
