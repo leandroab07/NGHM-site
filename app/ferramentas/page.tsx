@@ -1,10 +1,10 @@
 export default function FerramentasPage() {
   return (
     <>
-      <section className="bg-gradient-to-br from-indigo-900 to-teal-800 text-white py-16">
+      <section className="bg-white border-b border-gray-100 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-4xl font-bold mb-3">Ferramentas</h1>
-          <p className="text-indigo-200 text-lg max-w-2xl">
+          <h1 className="text-4xl font-bold text-gray-900 mb-3">Ferramentas</h1>
+          <p className="text-gray-500 text-lg max-w-2xl">
             Softwares, pipelines e plataformas bioinformáticas desenvolvidas e utilizadas pelo NGHM.
           </p>
         </div>

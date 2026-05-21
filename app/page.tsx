@@ -22,51 +22,37 @@ export default async function HomePage() {
   return (
     <>
       {/* Hero */}
-      <section className="relative bg-gradient-to-br from-blue-950 via-blue-900 to-teal-800 text-white overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-10 left-10 w-64 h-64 rounded-full bg-teal-400 blur-3xl" />
-          <div className="absolute bottom-10 right-10 w-80 h-80 rounded-full bg-purple-500 blur-3xl" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full bg-blue-400 blur-3xl" />
-        </div>
-
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-32">
+      <section className="bg-white border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28">
           <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 text-sm text-blue-200 mb-6 backdrop-blur-sm">
+            <div className="inline-flex items-center gap-2 bg-teal-50 border border-teal-100 rounded-full px-4 py-1.5 text-sm text-teal-700 mb-6">
               <span className="w-2 h-2 bg-teal-400 rounded-full animate-pulse" />
               Universidade Federal do Espírito Santo
             </div>
-            <h1 className="text-4xl md:text-6xl font-bold leading-tight mb-6">
+            <h1 className="text-4xl md:text-6xl font-bold leading-tight text-gray-900 mb-6">
               Núcleo de{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-300 to-blue-300">
-                Genética Humana
-              </span>{' '}
+              <span className="text-teal-600">Genética Humana</span>{' '}
               e Molecular
             </h1>
-            <p className="text-lg md:text-xl text-blue-100 leading-relaxed mb-8 max-w-2xl">
+            <p className="text-lg md:text-xl text-gray-500 leading-relaxed mb-8 max-w-2xl">
               Pesquisa de ponta em genômica, epigenética e biologia molecular para compreender e combater
               doenças humanas. Vinculado ao Departamento de Ciências Biológicas da UFES.
             </p>
             <div className="flex flex-wrap gap-4">
               <Link
                 href="/projetos"
-                className="bg-teal-500 hover:bg-teal-400 text-white font-semibold px-6 py-3 rounded-xl transition-all hover:shadow-lg hover:-translate-y-0.5"
+                className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-6 py-3 rounded-xl transition-all hover:shadow-md hover:-translate-y-0.5"
               >
                 Ver Projetos
               </Link>
               <Link
                 href="/publicacoes"
-                className="bg-white/10 hover:bg-white/20 text-white font-semibold px-6 py-3 rounded-xl border border-white/20 transition-all backdrop-blur-sm hover:-translate-y-0.5"
+                className="text-gray-700 font-semibold px-6 py-3 rounded-xl border border-gray-200 hover:bg-gray-50 transition-all hover:-translate-y-0.5"
               >
                 Publicações
               </Link>
             </div>
           </div>
-        </div>
-
-        <div className="absolute bottom-0 left-0 right-0">
-          <svg viewBox="0 0 1440 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M0 60L1440 60L1440 0C1200 50 240 50 0 0Z" fill="white" />
-          </svg>
         </div>
       </section>
 
@@ -160,15 +146,15 @@ export default async function HomePage() {
       </section>}
 
       {/* CTA */}
-      <section className="py-16 bg-gradient-to-r from-blue-700 to-teal-600 text-white">
+      <section className="py-16 bg-gray-50 border-t border-gray-100">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl font-bold mb-4">Faça parte da nossa pesquisa</h2>
-          <p className="text-blue-100 text-lg mb-8 max-w-2xl mx-auto">
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">Faça parte da nossa pesquisa</h2>
+          <p className="text-gray-500 text-lg mb-8 max-w-2xl mx-auto">
             Interessado em colaborar ou participar do NGHM? Entre em contato conosco.
           </p>
           <a
             href="mailto:nghm@ufes.br"
-            className="inline-block bg-white text-blue-700 font-bold px-8 py-3 rounded-xl hover:shadow-lg hover:-translate-y-0.5 transition-all"
+            className="inline-block bg-teal-600 hover:bg-teal-700 text-white font-bold px-8 py-3 rounded-xl hover:shadow-md hover:-translate-y-0.5 transition-all"
           >
             Entre em Contato
           </a>

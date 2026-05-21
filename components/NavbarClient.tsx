@@ -32,30 +32,31 @@ export default function NavbarClient({ user }: { user: PublicUser | null }) {
   }
 
   return (
-    <header className="bg-gradient-to-r from-blue-900 via-blue-800 to-teal-700 shadow-lg sticky top-0 z-50">
+    <header className="bg-white border-b border-gray-100 shadow-sm sticky top-0 z-50">
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
+
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full overflow-hidden bg-white/20 border border-white/30 shrink-0">
+            <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-100 shrink-0">
               <Image src="/nghm.png" alt="NGHM" width={40} height={40} className="w-full h-full object-cover" priority />
             </div>
             <div className="hidden sm:block">
-              <p className="text-white font-bold text-sm leading-tight">NGHM</p>
-              <p className="text-blue-200 text-xs leading-tight">UFES</p>
+              <p className="text-gray-900 font-bold text-sm leading-tight">NGHM</p>
+              <p className="text-gray-400 text-xs leading-tight">UFES</p>
             </div>
           </Link>
 
           {/* Links desktop */}
-          <div className="hidden md:flex items-center gap-1">
+          <div className="hidden md:flex items-center gap-0.5">
             {links.map(l => (
               <Link
                 key={l.href}
                 href={l.href}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                   pathname === l.href
-                    ? 'bg-white/20 text-white'
-                    : 'text-blue-100 hover:bg-white/10 hover:text-white'
+                    ? 'bg-teal-50 text-teal-700'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                 }`}
               >
                 {l.label}
@@ -69,16 +70,16 @@ export default function NavbarClient({ user }: { user: PublicUser | null }) {
               <div className="relative">
                 <button
                   onClick={() => setUserOpen(!userOpen)}
-                  className="flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-1.5 rounded-xl transition-all"
+                  className="flex items-center gap-2 bg-gray-50 hover:bg-gray-100 border border-gray-200 px-3 py-1.5 rounded-xl transition-all"
                 >
                   <div className="w-7 h-7 rounded-full bg-teal-500 flex items-center justify-center text-white text-xs font-bold">
                     {initials(user.name)}
                   </div>
-                  <span className="text-white text-sm font-medium">{user.name.split(' ')[0]}</span>
+                  <span className="text-gray-700 text-sm font-medium">{user.name.split(' ')[0]}</span>
                   {user.role === 'admin' && (
-                    <span className="text-xs bg-amber-400/20 text-amber-300 px-1.5 py-0.5 rounded-md font-semibold">Admin</span>
+                    <span className="text-xs bg-amber-50 text-amber-600 border border-amber-200 px-1.5 py-0.5 rounded-md font-semibold">Admin</span>
                   )}
-                  <span className="text-blue-200 text-xs">▾</span>
+                  <span className="text-gray-400 text-xs">▾</span>
                 </button>
 
                 {userOpen && (
@@ -89,53 +90,39 @@ export default function NavbarClient({ user }: { user: PublicUser | null }) {
                     </div>
                     {user.role === 'admin' && (
                       <>
-                        <Link
-                          href="/admin/dashboard"
-                          onClick={() => setUserOpen(false)}
-                          className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
-                        >
+                        <Link href="/admin/dashboard" onClick={() => setUserOpen(false)}
+                          className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-teal-50 hover:text-teal-700 transition-colors">
                           <span>🏠</span> Dashboard Admin
                         </Link>
-                        <Link
-                          href="/admin/usuarios"
-                          onClick={() => setUserOpen(false)}
-                          className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
-                        >
+                        <Link href="/admin/usuarios" onClick={() => setUserOpen(false)}
+                          className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-teal-50 hover:text-teal-700 transition-colors">
                           <span>👥</span> Gerenciar Usuários
                         </Link>
-                        <Link
-                          href="/admin/equipe"
-                          onClick={() => setUserOpen(false)}
-                          className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
-                        >
+                        <Link href="/admin/equipe" onClick={() => setUserOpen(false)}
+                          className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-teal-50 hover:text-teal-700 transition-colors">
                           <span>✏️</span> Editar Conteúdo
                         </Link>
                         <div className="border-t border-gray-100 my-1" />
                       </>
                     )}
-                    <button
-                      onClick={handleLogout}
-                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors"
-                    >
+                    <button onClick={handleLogout}
+                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors">
                       <span>🚪</span> Sair
                     </button>
                   </div>
                 )}
               </div>
             ) : (
-              <Link
-                href="/login"
-                className="bg-white/10 hover:bg-white/20 text-white text-sm font-semibold px-4 py-2 rounded-xl border border-white/20 transition-all"
-              >
+              <Link href="/login"
+                className="text-teal-700 text-sm font-semibold px-4 py-2 rounded-xl border border-teal-200 hover:bg-teal-50 transition-all">
                 Entrar
               </Link>
             )}
           </div>
 
-          {/* Hamburguer mobile */}
-          <button
-            onClick={() => setMenuOpen(!menuOpen)}
-            className="md:hidden p-2 rounded-lg text-blue-100 hover:bg-white/10"
+          {/* Hamburger mobile */}
+          <button onClick={() => setMenuOpen(!menuOpen)}
+            className="md:hidden p-2 rounded-lg text-gray-500 hover:bg-gray-100"
             aria-label="Menu"
           >
             <div className={`w-5 h-0.5 bg-current mb-1 transition-all ${menuOpen ? 'rotate-45 translate-y-1.5' : ''}`} />
@@ -146,43 +133,35 @@ export default function NavbarClient({ user }: { user: PublicUser | null }) {
 
         {/* Menu mobile */}
         {menuOpen && (
-          <div className="md:hidden pb-3 border-t border-white/10 pt-2">
+          <div className="md:hidden pb-3 border-t border-gray-100 pt-2">
             {links.map(l => (
-              <Link
-                key={l.href}
-                href={l.href}
-                onClick={() => setMenuOpen(false)}
+              <Link key={l.href} href={l.href} onClick={() => setMenuOpen(false)}
                 className={`block px-4 py-2 mt-1 rounded-lg text-sm font-medium transition-all ${
-                  pathname === l.href ? 'bg-white/20 text-white' : 'text-blue-100 hover:bg-white/10'
-                }`}
-              >
+                  pathname === l.href ? 'bg-teal-50 text-teal-700' : 'text-gray-600 hover:bg-gray-50'
+                }`}>
                 {l.label}
               </Link>
             ))}
-            <div className="border-t border-white/10 mt-2 pt-2">
+            <div className="border-t border-gray-100 mt-2 pt-2">
               {user ? (
                 <>
-                  <div className="px-4 py-2 text-sm text-blue-200">
-                    {user.name} {user.role === 'admin' && <span className="text-amber-300">(Admin)</span>}
+                  <div className="px-4 py-2 text-sm text-gray-500">
+                    {user.name} {user.role === 'admin' && <span className="text-amber-600">(Admin)</span>}
                   </div>
                   {user.role === 'admin' && (
-                    <Link href="/admin/dashboard" onClick={() => setMenuOpen(false)} className="block px-4 py-2 text-sm text-blue-100 hover:bg-white/10 rounded-lg">
+                    <Link href="/admin/dashboard" onClick={() => setMenuOpen(false)}
+                      className="block px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg">
                       Dashboard Admin
                     </Link>
                   )}
-                  <button
-                    onClick={() => { setMenuOpen(false); handleLogout() }}
-                    className="block w-full text-left px-4 py-2 text-sm text-red-300 hover:bg-white/10 rounded-lg"
-                  >
+                  <button onClick={() => { setMenuOpen(false); handleLogout() }}
+                    className="block w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50 rounded-lg">
                     Sair
                   </button>
                 </>
               ) : (
-                <Link
-                  href="/login"
-                  onClick={() => setMenuOpen(false)}
-                  className="block px-4 py-2 text-sm font-semibold text-white bg-white/10 hover:bg-white/20 rounded-lg text-center mt-1"
-                >
+                <Link href="/login" onClick={() => setMenuOpen(false)}
+                  className="block px-4 py-2 text-sm font-semibold text-teal-700 border border-teal-200 hover:bg-teal-50 rounded-lg text-center mt-1">
                   Entrar
                 </Link>
               )}
@@ -191,10 +170,7 @@ export default function NavbarClient({ user }: { user: PublicUser | null }) {
         )}
       </nav>
 
-      {/* Fecha dropdown ao clicar fora */}
-      {userOpen && (
-        <div className="fixed inset-0 z-40" onClick={() => setUserOpen(false)} />
-      )}
+      {userOpen && <div className="fixed inset-0 z-40" onClick={() => setUserOpen(false)} />}
     </header>
   )
 }
