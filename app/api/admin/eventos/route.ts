@@ -32,17 +32,35 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
-  if (!await getAuthorized(req)) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+  const user = await getAuthorized(req)
+  if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
   const body: Evento = await req.json()
   body.assignedTo = body.assignedTo ?? []
+
+  if (user.role !== 'admin') {
+    const { data } = await supabase.from('eventos').select('createdBy').eq('id', body.id).single()
+    if (!data || data.createdBy !== user.username) {
+      return NextResponse.json({ error: 'Sem permissão para editar este evento' }, { status: 403 })
+    }
+  }
+
   const { error } = await supabase.from('eventos').update(body).eq('id', body.id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json(body)
 }
 
 export async function DELETE(req: NextRequest) {
-  if (!await getAuthorized(req)) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+  const user = await getAuthorized(req)
+  if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
   const { id } = await req.json()
+
+  if (user.role !== 'admin') {
+    const { data } = await supabase.from('eventos').select('createdBy').eq('id', id).single()
+    if (!data || data.createdBy !== user.username) {
+      return NextResponse.json({ error: 'Sem permissão para remover este evento' }, { status: 403 })
+    }
+  }
+
   await supabase.from('task_responses').delete().eq('eventoId', id)
   const { error } = await supabase.from('eventos').delete().eq('id', id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

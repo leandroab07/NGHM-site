@@ -7,7 +7,9 @@ type Cat = keyof typeof catConfig
 
 export default function TaskNotification() {
   const [pending, setPending] = useState<Evento[]>([])
-  const [dismissed, setDismissed] = useState(false)
+  const [dismissed, setDismissed] = useState(() => {
+    try { return sessionStorage.getItem('nghm-notif-dismissed') === '1' } catch { return false }
+  })
   const [responding, setResponding] = useState<string | null>(null)
 
   useEffect(() => {
@@ -43,7 +45,10 @@ export default function TaskNotification() {
           </span>
         </div>
         <button
-          onClick={() => setDismissed(true)}
+          onClick={() => {
+            setDismissed(true)
+            try { sessionStorage.setItem('nghm-notif-dismissed', '1') } catch {}
+          }}
           className="text-blue-400 hover:text-blue-600 text-xl leading-none w-6 h-6 flex items-center justify-center rounded"
         >
           ×

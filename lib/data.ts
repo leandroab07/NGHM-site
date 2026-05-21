@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import { supabase } from './supabase'
 import { hashPassword } from './auth'
 import type { Membro, Publicacao, Projeto, Evento, User } from './types'
@@ -22,14 +23,14 @@ export async function getEventos(): Promise<Evento[]> {
   return (data ?? []) as Evento[]
 }
 
-export async function getUsers(): Promise<User[]> {
+export const getUsers = cache(async (): Promise<User[]> => {
   const { data } = await supabase.from('users').select('*')
   let users = (data ?? []) as User[]
 
-  const seedUsername = process.env.ADMIN_USERNAME || 'deboradm'
-  const seedPassword = process.env.ADMIN_PASSWORD || 'nghm9111@'
+  const seedUsername = process.env.ADMIN_USERNAME
+  const seedPassword = process.env.ADMIN_PASSWORD
 
-  if (!users.find(u => u.username === seedUsername)) {
+  if (seedUsername && seedPassword && !users.find(u => u.username === seedUsername)) {
     const seed: User = {
       id: '1',
       username: seedUsername,
@@ -42,4 +43,4 @@ export async function getUsers(): Promise<User[]> {
     if (!error) users = [seed, ...users]
   }
   return users
-}
+})

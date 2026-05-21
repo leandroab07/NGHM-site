@@ -1,6 +1,8 @@
 'use client'
 import { useState } from 'react'
-import type { Evento, PublicUser } from '@/lib/types'
+import type { Evento } from '@/lib/types'
+
+type MemberSummary = { username: string; name: string }
 import { catConfig } from '@/app/calendario/CalendarioClient'
 
 type Cat = keyof typeof catConfig
@@ -18,7 +20,7 @@ function fmtDate(iso: string) {
   return new Date(iso + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
-export default function EventosAdmin({ initialData, members }: { initialData: Evento[]; members: PublicUser[] }) {
+export default function EventosAdmin({ initialData, members }: { initialData: Evento[]; members: MemberSummary[] }) {
   const [eventos, setEventos] = useState<Evento[]>(
     [...initialData].sort((a, b) => a.data.localeCompare(b.data))
   )

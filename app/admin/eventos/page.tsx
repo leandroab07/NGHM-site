@@ -4,7 +4,7 @@ import { getEventos, getUsers } from '@/lib/data'
 
 export default async function AdminEventosPage() {
   const [eventos, users] = await Promise.all([getEventos(), getUsers()])
-  const members = users.map(({ passwordHash: _, ...u }) => u)
+  const members = users.map(u => ({ username: u.username, name: u.name }))
 
   return (
     <AdminShell>

@@ -1,6 +1,13 @@
 import { createHmac, timingSafeEqual, scryptSync, randomBytes } from 'crypto'
 
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me'
+function getJwtSecret(): string {
+  const secret = process.env.JWT_SECRET
+  if (!secret) {
+    if (process.env.NODE_ENV === 'production') throw new Error('JWT_SECRET não está definido')
+    return 'dev-secret-local-only'
+  }
+  return secret
+}
 
 function base64UrlEncode(str: string): string {
   return Buffer.from(str).toString('base64url')
@@ -17,7 +24,7 @@ export function createToken(username: string): string {
     iat: Math.floor(Date.now() / 1000),
     exp: Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60,
   }))
-  const signature = createHmac('sha256', JWT_SECRET)
+  const signature = createHmac('sha256', getJwtSecret())
     .update(`${header}.${payload}`)
     .digest('base64url')
   return `${header}.${payload}.${signature}`
@@ -29,7 +36,7 @@ export function verifyToken(token: string): { sub: string; exp: number } | null 
     if (parts.length !== 3) return null
     const [header, payload, signature] = parts
 
-    const expectedSig = createHmac('sha256', JWT_SECRET)
+    const expectedSig = createHmac('sha256', getJwtSecret())
       .update(`${header}.${payload}`)
       .digest('base64url')
 

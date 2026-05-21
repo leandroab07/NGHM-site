@@ -9,5 +9,5 @@ export async function GET(req: NextRequest) {
   const payload = verifyToken(token)
   if (!payload) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
   const users = await getUsers()
-  return NextResponse.json(users.map(({ passwordHash: _, ...u }) => u))
+  return NextResponse.json(users.map(u => ({ username: u.username, name: u.name })))
 }
