@@ -86,6 +86,16 @@ export interface ProjectResponse {
   respondidoEm: string
 }
 
+export interface PersonalTask {
+  id: string
+  username: string
+  titulo: string
+  descricao?: string
+  status: 'todo' | 'em_andamento' | 'concluido'
+  created_at?: string
+  order?: number
+}
+
 export interface ProjectTask {
   id: string
   projetoId: string

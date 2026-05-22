@@ -15,6 +15,7 @@ const publicLinks = [
 
 const authLinks = [
   { href: '/area/projetos', label: 'Projetos' },
+  { href: '/area/tarefas', label: 'Tarefas' },
   { href: '/calendario', label: 'Calendário' },
 ]
 
