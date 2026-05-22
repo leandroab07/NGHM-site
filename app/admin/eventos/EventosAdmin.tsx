@@ -139,13 +139,14 @@ export default function EventosAdmin({ initialData, members }: { initialData: Ev
                     key={key}
                     type="button"
                     onClick={() => setForm({ ...form, categoria: key })}
+                    style={form.categoria === key ? { borderColor: cfg.hex, color: cfg.hex, backgroundColor: cfg.hex + '18' } : undefined}
                     className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-medium transition-all ${
                       form.categoria === key
-                        ? `${cfg.light} border-current`
+                        ? 'border-current'
                         : 'border-gray-200 text-gray-500 hover:border-gray-300'
                     }`}
                   >
-                    <span className={`w-2.5 h-2.5 rounded-full ${cfg.color}`} />
+                    <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: cfg.hex }} />
                     {cfg.label}
                   </button>
                 ))}
@@ -277,11 +278,11 @@ function EventoItem({ e, onEdit, onDelete }: { e: Evento; onEdit: (e: Evento) =>
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-4 flex items-center justify-between gap-4">
       <div className="flex items-center gap-4 flex-1 min-w-0">
-        <div className={`w-1 self-stretch rounded-full ${cfg?.color}`} />
+        <div className="w-1 self-stretch rounded-full" style={{ backgroundColor: cfg?.hex }} />
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-gray-900 truncate">{e.titulo}</p>
           <div className="flex items-center gap-3 mt-0.5 flex-wrap">
-            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${cfg?.light}`}>{cfg?.label}</span>
+            <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: (cfg?.hex ?? '#9ca3af') + '18', color: cfg?.hex ?? '#9ca3af' }}>{cfg?.label}</span>
             <span className="text-xs text-gray-400">{fmtDate(e.data)}{e.hora ? ` · ${e.hora}` : ''}</span>
             {e.assignedTo && e.assignedTo.length > 0 && (
               <span className="text-xs text-teal-600 bg-teal-50 px-2 py-0.5 rounded-full">
