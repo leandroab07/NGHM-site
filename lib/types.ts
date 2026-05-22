@@ -43,6 +43,14 @@ export interface Evento {
   categoria: 'prova' | 'reuniao' | 'prazo' | 'aula' | 'evento' | 'outro'
   assignedTo?: string[]  // usernames marcados
   createdBy?: string     // username de quem criou
+  share_token?: string   // token para link de confirmação de presença
+}
+
+export interface EventRsvp {
+  id: string
+  evento_id: string
+  name: string
+  confirmed_at: string
 }
 
 export interface TaskResponse {

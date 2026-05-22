@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import type { Evento } from '@/lib/types'
+import type { Evento, EventRsvp } from '@/lib/types'
 
 type MemberSummary = { username: string; name: string }
 import { catConfig } from '@/app/calendario/CalendarioClient'
@@ -95,6 +95,10 @@ export default function EventosAdmin({ initialData, members }: { initialData: Ev
       body: JSON.stringify({ id }),
     })
     setEventos(prev => prev.filter(e => e.id !== id))
+  }
+
+  function handleTokenGenerated(id: string, token: string) {
+    setEventos(prev => prev.map(e => e.id === id ? { ...e, share_token: token } : e))
   }
 
   const today    = new Date().toISOString().split('T')[0]
@@ -251,7 +255,7 @@ export default function EventosAdmin({ initialData, members }: { initialData: Ev
             <span className="w-2 h-2 rounded-full bg-green-500" /> Próximas
           </h3>
           <div className="space-y-2">
-            {proximos.map(e => <EventoItem key={e.id} e={e} onEdit={openEdit} onDelete={handleDelete} />)}
+            {proximos.map(e => <EventoItem key={e.id} e={e} onEdit={openEdit} onDelete={handleDelete} onTokenGenerated={handleTokenGenerated} />)}
           </div>
         </section>
       )}
@@ -262,7 +266,7 @@ export default function EventosAdmin({ initialData, members }: { initialData: Ev
             <span className="w-2 h-2 rounded-full bg-gray-300" /> Passadas
           </h3>
           <div className="space-y-2 opacity-60">
-            {passados.reverse().map(e => <EventoItem key={e.id} e={e} onEdit={openEdit} onDelete={handleDelete} />)}
+            {passados.reverse().map(e => <EventoItem key={e.id} e={e} onEdit={openEdit} onDelete={handleDelete} onTokenGenerated={handleTokenGenerated} />)}
           </div>
         </section>
       )}
@@ -270,37 +274,150 @@ export default function EventosAdmin({ initialData, members }: { initialData: Ev
   )
 }
 
-function EventoItem({ e, onEdit, onDelete }: { e: Evento; onEdit: (e: Evento) => void; onDelete: (id: string) => void }) {
+function EventoItem({
+  e, onEdit, onDelete, onTokenGenerated,
+}: {
+  e: Evento
+  onEdit: (e: Evento) => void
+  onDelete: (id: string) => void
+  onTokenGenerated: (id: string, token: string) => void
+}) {
   const cfg = catConfig[e.categoria as Cat]
+  const [open, setOpen]       = useState(false)
+  const [sharing, setSharing] = useState(false)
+  const [token, setToken]     = useState<string | null>(e.share_token ?? null)
+  const [rsvps, setRsvps]     = useState<EventRsvp[] | null>(null)
+  const [copied, setCopied]   = useState(false)
+
   function fmtDate(iso: string) {
     return new Date(iso + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
   }
+
+  async function generateLink() {
+    setSharing(true)
+    try {
+      const res = await fetch('/api/admin/eventos/share', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ eventoId: e.id }),
+      })
+      const data = await res.json()
+      setToken(data.token)
+      onTokenGenerated(e.id, data.token)
+      loadRsvps(data.token)
+    } finally { setSharing(false) }
+  }
+
+  async function loadRsvps(tok?: string) {
+    const res = await fetch(`/api/admin/eventos/share?eventoId=${e.id}`)
+    if (res.ok) setRsvps(await res.json())
+  }
+
+  function handleToggle() {
+    if (!open && token && rsvps === null) loadRsvps()
+    setOpen(v => !v)
+  }
+
+  function copyLink() {
+    navigator.clipboard.writeText(`${window.location.origin}/rsvp/${token}`)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl p-4 flex items-center justify-between gap-4">
-      <div className="flex items-center gap-4 flex-1 min-w-0">
-        <div className="w-1 self-stretch rounded-full" style={{ backgroundColor: cfg?.hex }} />
-        <div className="flex-1 min-w-0">
-          <p className="font-semibold text-gray-900 truncate">{e.titulo}</p>
-          <div className="flex items-center gap-3 mt-0.5 flex-wrap">
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: (cfg?.hex ?? '#9ca3af') + '18', color: cfg?.hex ?? '#9ca3af' }}>{cfg?.label}</span>
-            <span className="text-xs text-gray-400">{fmtDate(e.data)}{e.hora ? ` · ${e.hora}` : ''}</span>
-            {e.assignedTo && e.assignedTo.length > 0 && (
-              <span className="text-xs text-teal-600 bg-teal-50 px-2 py-0.5 rounded-full">
-                {e.assignedTo.length} marcado{e.assignedTo.length > 1 ? 's' : ''}
-              </span>
-            )}
+    <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
+      <div className="p-4 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4 flex-1 min-w-0">
+          <div className="w-1 self-stretch rounded-full" style={{ backgroundColor: cfg?.hex }} />
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-gray-900 truncate">{e.titulo}</p>
+            <div className="flex items-center gap-3 mt-0.5 flex-wrap">
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: (cfg?.hex ?? '#9ca3af') + '18', color: cfg?.hex ?? '#9ca3af' }}>{cfg?.label}</span>
+              <span className="text-xs text-gray-400">{fmtDate(e.data)}{e.hora ? ` · ${e.hora}` : ''}</span>
+              {e.assignedTo && e.assignedTo.length > 0 && (
+                <span className="text-xs text-teal-600 bg-teal-50 px-2 py-0.5 rounded-full">
+                  {e.assignedTo.length} marcado{e.assignedTo.length > 1 ? 's' : ''}
+                </span>
+              )}
+            </div>
+            {e.descricao && <p className="text-xs text-gray-400 mt-1 truncate">{e.descricao}</p>}
           </div>
-          {e.descricao && <p className="text-xs text-gray-400 mt-1 truncate">{e.descricao}</p>}
+        </div>
+        <div className="flex gap-2 shrink-0">
+          <button
+            onClick={handleToggle}
+            className={`text-sm px-3 py-1.5 rounded-lg transition-colors ${open ? 'bg-gray-100 text-gray-700' : 'text-gray-500 bg-gray-50 hover:bg-gray-100'}`}
+          >
+            {open ? '▲' : '👥'} Presença
+          </button>
+          <button onClick={() => onEdit(e)} className="text-sm text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors">
+            Editar
+          </button>
+          <button onClick={() => onDelete(e.id)} className="text-sm text-red-500 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors">
+            Remover
+          </button>
         </div>
       </div>
-      <div className="flex gap-2 shrink-0">
-        <button onClick={() => onEdit(e)} className="text-sm text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors">
-          Editar
-        </button>
-        <button onClick={() => onDelete(e.id)} className="text-sm text-red-500 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors">
-          Remover
-        </button>
-      </div>
+
+      {open && (
+        <div className="border-t border-gray-100 p-4 bg-gray-50 space-y-4">
+          {!token ? (
+            <button
+              onClick={generateLink}
+              disabled={sharing}
+              className="text-sm font-medium text-teal-700 bg-teal-50 hover:bg-teal-100 disabled:opacity-50 px-4 py-2 rounded-xl transition-colors"
+            >
+              {sharing ? 'Gerando...' : '🔗 Gerar link de confirmação de presença'}
+            </button>
+          ) : (
+            <div className="space-y-3">
+              <div>
+                <p className="text-xs font-medium text-gray-500 mb-1.5">Link compartilhável</p>
+                <div className="flex gap-2">
+                  <input
+                    readOnly
+                    value={`${typeof window !== 'undefined' ? window.location.origin : ''}/rsvp/${token}`}
+                    className="flex-1 text-xs bg-white border border-gray-200 rounded-lg px-3 py-2 text-gray-600 focus:outline-none"
+                  />
+                  <button
+                    onClick={copyLink}
+                    className={`shrink-0 text-xs font-semibold px-3 py-2 rounded-lg transition-colors ${copied ? 'bg-green-100 text-green-700' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+                  >
+                    {copied ? '✓ Copiado' : 'Copiar'}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs font-medium text-gray-500">
+                    Confirmações{rsvps !== null ? ` (${rsvps.length})` : ''}
+                  </p>
+                  <button onClick={() => loadRsvps()} className="text-xs text-blue-600 hover:underline">
+                    Atualizar
+                  </button>
+                </div>
+                {rsvps === null ? (
+                  <p className="text-sm text-gray-400">Carregando...</p>
+                ) : rsvps.length === 0 ? (
+                  <p className="text-sm text-gray-400">Nenhuma confirmação ainda.</p>
+                ) : (
+                  <div className="bg-white border border-gray-200 rounded-xl divide-y divide-gray-100">
+                    {rsvps.map(r => (
+                      <div key={r.id} className="flex items-center justify-between px-3 py-2">
+                        <span className="text-sm font-medium text-gray-800">{r.name}</span>
+                        <span className="text-xs text-gray-400">
+                          {new Date(r.confirmed_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
