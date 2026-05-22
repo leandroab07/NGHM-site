@@ -49,11 +49,13 @@ export default function TarefasClient({
   const [newDesc, setNewDesc]     = useState('')
   const [newStatus, setNewStatus] = useState<PersonalTask['status']>('todo')
   const [creating, setCreating]   = useState(false)
+  const [createError, setCreateError] = useState<string | null>(null)
 
   // Edit form
   const [editing, setEditing]   = useState<PersonalTask | null>(null)
   const [editForm, setEditForm] = useState<Partial<PersonalTask>>({})
   const [saving, setSaving]     = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   const isOwn = selectedMember.username === currentUsername
 
@@ -73,18 +75,22 @@ export default function TarefasClient({
 
   async function createTask() {
     if (!newTitle.trim()) return
-    setCreating(true)
+    setCreating(true); setCreateError(null)
     try {
       const res = await fetch('/api/personal-tasks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ titulo: newTitle.trim(), descricao: newDesc, status: newStatus }),
       })
+      const data = await res.json()
       if (res.ok) {
-        const task: PersonalTask = await res.json()
-        setPersonal(prev => [...prev, task])
+        setPersonal(prev => [...prev, data as PersonalTask])
         setNewTitle(''); setNewDesc(''); setNewStatus('todo'); setAdding(false)
+      } else {
+        setCreateError(data?.error ?? `Erro ${res.status}`)
       }
+    } catch {
+      setCreateError('Falha na conexão. Verifique se a tabela personal_tasks existe no Supabase.')
     } finally { setCreating(false) }
   }
 
@@ -99,18 +105,22 @@ export default function TarefasClient({
 
   async function saveEdit() {
     if (!editing) return
-    setSaving(true)
+    setSaving(true); setSaveError(null)
     try {
       const res = await fetch('/api/personal-tasks', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: editing.id, ...editForm }),
       })
+      const data = await res.json()
       if (res.ok) {
-        const updated: PersonalTask = await res.json()
-        setPersonal(prev => prev.map(t => t.id === updated.id ? updated : t))
+        setPersonal(prev => prev.map(t => t.id === data.id ? data : t))
         setEditing(null)
+      } else {
+        setSaveError(data?.error ?? `Erro ${res.status}`)
       }
+    } catch {
+      setSaveError('Falha na conexão.')
     } finally { setSaving(false) }
   }
 
@@ -327,8 +337,13 @@ export default function TarefasClient({
                 </select>
               </div>
             </div>
+            {createError && (
+              <div className="mx-6 mb-2 text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl px-4 py-2.5">
+                {createError}
+              </div>
+            )}
             <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-2">
-              <button onClick={() => setAdding(false)} className="text-sm text-gray-600 font-medium px-4 py-2 rounded-xl border border-gray-200 hover:bg-gray-50">Cancelar</button>
+              <button onClick={() => { setAdding(false); setCreateError(null) }} className="text-sm text-gray-600 font-medium px-4 py-2 rounded-xl border border-gray-200 hover:bg-gray-50">Cancelar</button>
               <button onClick={createTask} disabled={creating || !newTitle.trim()}
                 className="bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white text-sm font-semibold px-5 py-2 rounded-xl transition-colors">
                 {creating ? 'Criando…' : 'Criar tarefa'}
@@ -371,6 +386,11 @@ export default function TarefasClient({
                 </select>
               </div>
             </div>
+            {saveError && (
+              <div className="mx-6 mb-2 text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl px-4 py-2.5">
+                {saveError}
+              </div>
+            )}
             <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
               <button onClick={() => deletePersonal(editing.id)}
                 className="text-sm text-red-500 hover:text-red-700 font-medium px-3 py-2 rounded-xl hover:bg-red-50 transition-colors flex items-center gap-1.5">
