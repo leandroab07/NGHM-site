@@ -27,16 +27,19 @@ export default async function AreaTarefasPage() {
 
   const members = users.map(u => ({ username: u.username, name: u.name }))
 
-  const [personalRes, projectTasksRes, projects] = await Promise.all([
+  const [personalRes, projectTasksRes, projects, acceptedRes] = await Promise.all([
     supabase.from('personal_tasks').select('*').eq('username', user.username).order('order', { ascending: true }),
     supabase.from('project_tasks').select('*').order('order', { ascending: true }),
     getLabProjects(),
+    supabase.from('project_responses').select('projetoId').eq('username', user.username).eq('resposta', 'aceito'),
   ])
 
   const projectMap = Object.fromEntries(projects.map(p => [p.id, p.titulo]))
+  const acceptedIds = new Set((acceptedRes.data ?? []).map((r: { projetoId: string }) => r.projetoId))
 
+  // Show ALL tasks from accepted projects, not just ones explicitly assigned to user
   const myProjectTasks = (projectTasksRes.data ?? [] as ProjectTask[])
-    .filter((t: ProjectTask) => Array.isArray(t.assignedTo) && t.assignedTo.includes(user.username))
+    .filter((t: ProjectTask) => acceptedIds.has(t.projetoId))
     .map((t: ProjectTask) => ({ ...t, projetoNome: projectMap[t.projetoId] ?? 'Projeto' }))
 
   return (

@@ -23,17 +23,19 @@ export async function GET(req: NextRequest) {
   if (target !== currentUser.username && currentUser.role !== 'admin')
     return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
 
-  const [personalRes, projectTasksRes, projects] = await Promise.all([
+  const [personalRes, projectTasksRes, projects, acceptedRes] = await Promise.all([
     supabase.from('personal_tasks').select('*').eq('username', target).order('order', { ascending: true }),
     supabase.from('project_tasks').select('*').order('order', { ascending: true }),
     getLabProjects(),
+    supabase.from('project_responses').select('projetoId').eq('username', target).eq('resposta', 'aceito'),
   ])
 
   const projectMap = Object.fromEntries(projects.map(p => [p.id, p.titulo]))
+  const acceptedIds = new Set((acceptedRes.data ?? []).map((r: { projetoId: string }) => r.projetoId))
 
-  // Supabase .contains() on text[] fails silently — filter in JS
+  // Show ALL tasks from accepted projects (not just ones explicitly assigned to the member)
   const myProjectTasks = (projectTasksRes.data ?? [])
-    .filter((t: ProjectTask) => Array.isArray(t.assignedTo) && t.assignedTo.includes(target))
+    .filter((t: ProjectTask) => acceptedIds.has(t.projetoId))
     .map((t: ProjectTask) => ({ ...t, projetoNome: projectMap[t.projetoId] ?? 'Projeto' }))
 
   return NextResponse.json({
