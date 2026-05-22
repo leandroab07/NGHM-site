@@ -24,14 +24,19 @@ export default function EventosAdmin({ initialData, members }: { initialData: Ev
   const [eventos, setEventos] = useState<Evento[]>(
     [...initialData].sort((a, b) => a.data.localeCompare(b.data))
   )
-  const [editing, setEditing]   = useState<Evento | null>(null)
-  const [form, setForm]         = useState<Omit<Evento, 'id'>>(emptyForm())
-  const [showForm, setShowForm] = useState(false)
-  const [saving, setSaving]     = useState(false)
+  const [editing, setEditing]         = useState<Evento | null>(null)
+  const [form, setForm]               = useState<Omit<Evento, 'id'>>(emptyForm())
+  const [showForm, setShowForm]       = useState(false)
+  const [saving, setSaving]           = useState(false)
+  const [generateLink, setGenerateLink] = useState(false)
+  const [newLink, setNewLink]         = useState<string | null>(null)
+  const [linkCopied, setLinkCopied]   = useState(false)
 
   function openNew() {
     setEditing(null)
     setForm(emptyForm())
+    setGenerateLink(false)
+    setNewLink(null)
     setShowForm(true)
     setTimeout(() => document.getElementById('form-titulo')?.focus(), 50)
   }
@@ -62,6 +67,7 @@ export default function EventosAdmin({ initialData, members }: { initialData: Ev
   async function handleSave() {
     if (!form.titulo || !form.data) return
     setSaving(true)
+    setNewLink(null)
     try {
       const body = {
         ...form,
@@ -76,6 +82,7 @@ export default function EventosAdmin({ initialData, members }: { initialData: Ev
         })
         const updated = await res.json()
         setEventos(prev => prev.map(e => e.id === editing.id ? updated : e).sort((a, b) => a.data.localeCompare(b.data)))
+        setShowForm(false)
       } else {
         const res = await fetch('/api/admin/eventos', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -83,8 +90,19 @@ export default function EventosAdmin({ initialData, members }: { initialData: Ev
         })
         const created = await res.json()
         setEventos(prev => [...prev, created].sort((a, b) => a.data.localeCompare(b.data)))
+        if (generateLink) {
+          const shareRes = await fetch('/api/admin/eventos/share', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ eventoId: created.id }),
+          })
+          const shareData = await shareRes.json()
+          const url = `${window.location.origin}/rsvp/${shareData.token}`
+          setNewLink(url)
+          setEventos(prev => prev.map(e => e.id === created.id ? { ...e, share_token: shareData.token } : e))
+        } else {
+          setShowForm(false)
+        }
       }
-      setShowForm(false)
     } finally { setSaving(false) }
   }
 
@@ -223,6 +241,37 @@ export default function EventosAdmin({ initialData, members }: { initialData: Ev
             )}
           </div>
 
+          {!editing && (
+            <div className="md:col-span-2">
+              <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={generateLink}
+                  onChange={e => setGenerateLink(e.target.checked)}
+                  className="w-4 h-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                />
+                <span className="text-sm text-gray-700">Gerar link de confirmação de presença</span>
+              </label>
+            </div>
+          )}
+
+          {newLink && (
+            <div className="md:col-span-2 bg-teal-50 border border-teal-200 rounded-xl p-4 space-y-2">
+              <p className="text-sm font-semibold text-teal-800">Tarefa criada! Compartilhe o link:</p>
+              <div className="flex gap-2">
+                <input readOnly value={newLink} className="flex-1 text-xs bg-white border border-teal-200 rounded-lg px-3 py-2 text-gray-700 focus:outline-none" />
+                <button
+                  type="button"
+                  onClick={() => { navigator.clipboard.writeText(newLink); setLinkCopied(true); setTimeout(() => setLinkCopied(false), 2000) }}
+                  className={`shrink-0 text-xs font-semibold px-3 py-2 rounded-lg transition-colors ${linkCopied ? 'bg-green-100 text-green-700' : 'bg-white border border-teal-200 text-teal-700 hover:bg-teal-50'}`}
+                >
+                  {linkCopied ? '✓ Copiado' : 'Copiar'}
+                </button>
+              </div>
+              <button type="button" onClick={() => setShowForm(false)} className="text-xs text-teal-600 hover:underline">Fechar formulário</button>
+            </div>
+          )}
+
           <div className="flex gap-3 mt-4">
             <button
               onClick={handleSave}
@@ -231,12 +280,14 @@ export default function EventosAdmin({ initialData, members }: { initialData: Ev
             >
               {saving ? 'Salvando...' : 'Salvar'}
             </button>
-            <button
-              onClick={() => setShowForm(false)}
-              className="border border-gray-200 hover:bg-gray-50 text-gray-600 text-sm font-medium px-5 py-2.5 rounded-xl transition-colors"
-            >
-              Cancelar
-            </button>
+            {!newLink && (
+              <button
+                onClick={() => setShowForm(false)}
+                className="border border-gray-200 hover:bg-gray-50 text-gray-600 text-sm font-medium px-5 py-2.5 rounded-xl transition-colors"
+              >
+                Cancelar
+              </button>
+            )}
           </div>
         </div>
       )}

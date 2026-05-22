@@ -3,18 +3,18 @@ import { verifyToken } from '@/lib/auth'
 import { getUsers } from '@/lib/data'
 import { supabase } from '@/lib/supabase'
 
-async function getAdmin(req: NextRequest) {
+async function getAuth(req: NextRequest) {
   const token = req.cookies.get('nghm-admin-token')?.value
   if (!token) return null
   const payload = verifyToken(token)
   if (!payload) return null
   const users = await getUsers()
-  const user = users.find(u => u.username === payload.sub)
-  return user?.role === 'admin' ? user : null
+  return users.find(u => u.username === payload.sub) ?? null
 }
 
 export async function POST(req: NextRequest) {
-  if (!await getAdmin(req)) return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
+  const user = await getAuth(req)
+  if (!user || user.role !== 'admin') return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
   const { eventoId } = await req.json()
 
   const { data: existing } = await supabase
@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
-  if (!await getAdmin(req)) return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
+  if (!await getAuth(req)) return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
   const eventoId = req.nextUrl.searchParams.get('eventoId')
   if (!eventoId) return NextResponse.json({ error: 'eventoId obrigatório' }, { status: 400 })
   const { data } = await supabase

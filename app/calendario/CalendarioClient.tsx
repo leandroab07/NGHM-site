@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import type { Evento, TaskResponse } from '@/lib/types'
+import type { Evento, TaskResponse, EventRsvp } from '@/lib/types'
 
 const WEEKDAYS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']
 const MONTHS   = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
@@ -28,11 +28,12 @@ function ChevR() {
 
 // ── Meus Compromissos ──────────────────────────────────────────────────────
 function MeusCompromissos({ eventos, currentUsername }: { eventos: Evento[]; currentUsername: string }) {
-  const [selected, setSelected]     = useState<Evento | null>(null)
-  const [mode, setMode]             = useState<'criada' | 'aceita'>('criada')
-  const [responses, setResponses]   = useState<TaskResponse[]>([])
+  const [selected, setSelected]       = useState<Evento | null>(null)
+  const [mode, setMode]               = useState<'criada' | 'aceita'>('criada')
+  const [responses, setResponses]     = useState<TaskResponse[]>([])
+  const [rsvps, setRsvps]             = useState<EventRsvp[]>([])
   const [acceptedIds, setAcceptedIds] = useState<Set<string>>(new Set())
-  const [loadingId, setLoadingId]   = useState<string | null>(null)
+  const [loadingId, setLoadingId]     = useState<string | null>(null)
   const [loadingMine, setLoadingMine] = useState(true)
 
   useEffect(() => {
@@ -50,10 +51,14 @@ function MeusCompromissos({ eventos, currentUsername }: { eventos: Evento[]; cur
   const aceitas = eventos.filter(e => acceptedIds.has(e.id)).sort((a, b) => a.data.localeCompare(b.data))
 
   async function openEvento(e: Evento, m: 'criada' | 'aceita') {
-    setSelected(e); setMode(m); setLoadingId(e.id)
+    setSelected(e); setMode(m); setLoadingId(e.id); setRsvps([])
     try {
-      const res = await fetch(`/api/task-responses?eventoId=${e.id}`)
-      setResponses(res.ok ? await res.json() : [])
+      const [taskRes, rsvpRes] = await Promise.all([
+        fetch(`/api/task-responses?eventoId=${e.id}`),
+        m === 'criada' ? fetch(`/api/admin/eventos/share?eventoId=${e.id}`) : Promise.resolve(null),
+      ])
+      setResponses(taskRes.ok ? await taskRes.json() : [])
+      if (rsvpRes?.ok) setRsvps(await rsvpRes.json())
     } finally { setLoadingId(null) }
   }
 
@@ -178,45 +183,53 @@ function MeusCompromissos({ eventos, currentUsername }: { eventos: Evento[]; cur
                 </div>
               )}
               {mode === 'criada' && (
-                assigned.length === 0 ? (
-                  <p className="text-xs text-gray-400">Nenhum membro marcado.</p>
-                ) : (
-                  <div className="space-y-3">
-                    {accepted.length > 0 && (
-                      <div>
-                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1.5">Aceitaram ({accepted.length})</p>
-                        {accepted.map(r => (
-                          <div key={r.username} className="flex items-center gap-2 py-1 text-sm text-gray-700">
-                            <span className="w-1.5 h-1.5 rounded-full bg-green-400 shrink-0"/>
-                            {r.name}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {declined.length > 0 && (
-                      <div>
-                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1.5">Recusaram ({declined.length})</p>
-                        {declined.map(r => (
-                          <div key={r.username} className="flex items-center gap-2 py-1 text-sm text-gray-700">
-                            <span className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0"/>
-                            {r.name}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {pending.length > 0 && (
-                      <div>
-                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1.5">Aguardando ({pending.length})</p>
-                        {pending.map(u => (
-                          <div key={u} className="flex items-center gap-2 py-1 text-sm text-gray-500">
-                            <span className="w-1.5 h-1.5 rounded-full bg-amber-300 shrink-0"/>
-                            @{u}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )
+                <div className="space-y-3">
+                  {(accepted.length > 0 || rsvps.length > 0) && (
+                    <div>
+                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1.5">
+                        Aceitaram ({accepted.length + rsvps.length})
+                      </p>
+                      {accepted.map(r => (
+                        <div key={r.username} className="flex items-center gap-2 py-1 text-sm text-gray-700">
+                          <span className="w-1.5 h-1.5 rounded-full bg-green-400 shrink-0"/>
+                          {r.name}
+                        </div>
+                      ))}
+                      {rsvps.map(r => (
+                        <div key={r.id} className="flex items-center gap-2 py-1 text-sm text-gray-700">
+                          <span className="w-1.5 h-1.5 rounded-full bg-teal-400 shrink-0"/>
+                          <span>{r.name}</span>
+                          <span className="text-xs text-gray-400 ml-auto">via link</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {declined.length > 0 && (
+                    <div>
+                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1.5">Recusaram ({declined.length})</p>
+                      {declined.map(r => (
+                        <div key={r.username} className="flex items-center gap-2 py-1 text-sm text-gray-700">
+                          <span className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0"/>
+                          {r.name}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {pending.length > 0 && (
+                    <div>
+                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1.5">Aguardando ({pending.length})</p>
+                      {pending.map(u => (
+                        <div key={u} className="flex items-center gap-2 py-1 text-sm text-gray-500">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-300 shrink-0"/>
+                          @{u}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {accepted.length === 0 && rsvps.length === 0 && declined.length === 0 && pending.length === 0 && (
+                    <p className="text-xs text-gray-400">Nenhuma confirmação ainda.</p>
+                  )}
+                </div>
               )}
             </div>
           </div>
